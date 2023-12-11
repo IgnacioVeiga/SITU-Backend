@@ -67,13 +67,13 @@ VALUES
   ('Empresa B', '/images/company_b_logo.jpg'),
   ('Empresa C', '/images/company_c_logo.jpg');
 
-INSERT INTO profile_images (image_path)
+INSERT INTO profile_images (filename)
 VALUES
   ('123456789.jpg'),
   ('987654321.jpg'),
   ('555555555.jpg');
 
-INSERT INTO report_images (image_path)
+INSERT INTO report_images (filename)
 VALUES
   ('/images/report_1_image.jpg'),
   ('/images/report_2_image.jpg');
