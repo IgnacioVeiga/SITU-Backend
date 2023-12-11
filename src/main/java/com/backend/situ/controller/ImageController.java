@@ -22,8 +22,10 @@ public class ImageController {
 
     @PostMapping("/upload/user-profile")
     public ResponseEntity<Boolean> handleFileUpload(
-            @RequestParam("file") MultipartFile file) {
-        boolean saved = this.imageService.saveUserProfileImage(file);
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("dni") Integer dni
+    ) {
+        boolean saved = this.imageService.saveUserProfileImage(file, dni);
         if (saved)
             return ResponseEntity.ok(true);
         else

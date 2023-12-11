@@ -1,8 +1,8 @@
 package com.backend.situ.service;
 
+import com.backend.situ.entity.image.ProfileImage;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
-import com.backend.situ.entity.image.ProfileImage;
 import com.backend.situ.repository.image.ProfileImageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,16 +22,20 @@ public class ImageService {
         this.profileImageRepository = profileImageRepository;
     }
 
-    public Boolean saveUserProfileImage(MultipartFile file){
+    public Boolean saveUserProfileImage(
+            MultipartFile file,
+            Integer dni
+    ){
         try {
+            String fileName = file.getOriginalFilename();
+            String newFileName = dni + fileName.substring(fileName.lastIndexOf('.'));
+
             File dest = new File(
-                    Paths.get("files/uploads")
-                            .resolve(file.getOriginalFilename())
-                            .toString()
+                    Paths.get("files/uploads", newFileName).toUri()
             );
             file.transferTo(dest);
 
-            ProfileImage img = new ProfileImage(file.getOriginalFilename());
+            ProfileImage img = new ProfileImage(newFileName);
             this.profileImageRepository.save(img);
             return true;
         }
