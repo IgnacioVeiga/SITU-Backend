@@ -13,8 +13,8 @@ public class Company {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "logo_path", nullable = false)
-    private String logoPath;
+    @Column(name = "logo_filename", nullable = false)
+    private String logo_filename;
 
     public Long getId() {
         return id;
@@ -32,12 +32,12 @@ public class Company {
         this.name = name;
     }
 
-    public String getLogoPath() {
-        return logoPath;
+    public String getLogo_filename() {
+        return logo_filename;
     }
 
-    public void setLogoPath(String logoPath) {
-        this.logoPath = logoPath;
+    public void setLogo_filename(String logo_filename) {
+        this.logo_filename = logo_filename;
     }
 
     public Company() {
@@ -46,6 +46,6 @@ public class Company {
     public Company(Long id, String name, String logoPath) {
         this.id = id;
         this.name = name;
-        this.logoPath = logoPath;
+        this.logo_filename = logoPath;
     }
 }

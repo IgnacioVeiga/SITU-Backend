@@ -1,0 +1,1 @@
+ALTER TABLE public.companies RENAME COLUMN logo_path TO logo_filename;
