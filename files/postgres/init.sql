@@ -5,7 +5,7 @@ CREATE TYPE alert_priority AS ENUM ('HIGH', 'MEDIUM', 'LOW');
 CREATE TABLE companies (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
-  logo_path VARCHAR(255) NOT NULL
+  logo_filename VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE profile_images (
@@ -61,7 +61,7 @@ CREATE TABLE alerts (
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-INSERT INTO companies (name, logo_path)
+INSERT INTO companies (name, logo_filename)
 VALUES
   ('Empresa A', '/images/company_a_logo.jpg'),
   ('Empresa B', '/images/company_b_logo.jpg'),
