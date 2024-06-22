@@ -2,6 +2,7 @@ package com.backend.situ.service;
 
 import com.backend.situ.entity.UserCredentials;
 import com.backend.situ.model.ChangePasswordForm;
+import com.backend.situ.model.LogInFrom;
 import com.backend.situ.model.SignUpForm;
 import com.backend.situ.repository.AuthRepository;
 import com.backend.situ.security.JWTUtil;
@@ -27,10 +28,10 @@ public class AuthService {
         this.authRepository = authRepository;
     }
 
-    public String doLogin(UserCredentials cred) {
-        UserCredentials user = this.authRepository.findByEmail(cred.email);
+    public String doLogin(LogInFrom form) {
+        UserCredentials user = this.authRepository.findByEmail(form.email());
 
-        if (user == null || !passwordEncoder.matches(cred.getPassword(), user.getPassword())) {
+        if (user == null || !passwordEncoder.matches(form.password(), user.getPassword())) {
             return null;
         }
 
@@ -51,7 +52,7 @@ public class AuthService {
         return password.toString();
     }
 
-    public boolean signup(SignUpForm form) {
+    public String signup(SignUpForm form) {
         String randomPassword = generateRandomPassword();
         String encodedPassword = passwordEncoder.encode(randomPassword);
 
@@ -61,18 +62,15 @@ public class AuthService {
         // TODO: guardar en la DB el resto de los datos del formulario
 
         // ¡TEMPORAL! En un entorno de producción, la contraseña se envía por email al usuario.
-        System.out.println("Email: " + form.email() + " - Password: " + randomPassword);
-
-        // Por ahora se retorna true, más adelante hay que comprobar los datos
-        return true;
+        return "Email: " + form.email() + " - Password: " + randomPassword;
     }
 
     public boolean changePassword(ChangePasswordForm form) {
         UserCredentials user = this.authRepository.findByEmail(form.getEmail());
 
-//        if (user == null || !passwordEncoder.matches(form.getCurrentPassword(), user.getPassword())) {
-//            return false;
-//        }
+        if (user == null || !passwordEncoder.matches(form.getCurrentPassword(), user.getPassword())) {
+            return false;
+        }
 
         String encodedNewPassword = passwordEncoder.encode(form.getNewPassword());
         user.setPassword(encodedNewPassword);
