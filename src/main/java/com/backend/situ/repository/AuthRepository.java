@@ -1,10 +1,10 @@
 package com.backend.situ.repository;
 
-import com.backend.situ.entity.LogInCredentials;
+import com.backend.situ.entity.UserCredentials;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface AuthRepository extends JpaRepository<LogInCredentials, Integer> {
-    LogInCredentials findByEmail(String email);
+public interface AuthRepository extends JpaRepository<UserCredentials, Integer> {
+    UserCredentials findByEmail(String email);
 }

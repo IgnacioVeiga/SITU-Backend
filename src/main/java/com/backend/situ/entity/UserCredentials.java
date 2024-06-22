@@ -3,12 +3,17 @@ package com.backend.situ.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "credential", schema = "public")
-public class LogInCredentials {
+@Table(name = "user_credentials", schema = "public")
+public class UserCredentials {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
     public int userId;
+
+    @Column(nullable = false, unique = true)
     public String email;
+
+    @Column(name = "password_hash", nullable = false)
     private String password;
 
     public String getPassword() {
@@ -16,17 +21,13 @@ public class LogInCredentials {
     }
 
     public void setPassword(String password) {
-        // TODO: transform password into a hash or something
         this.password = password;
     }
 
-    public LogInCredentials() { }
+    public UserCredentials() { }
 
-    public LogInCredentials(
-            String email,
-            String password
-    ) {
+    public UserCredentials(String email, String password) {
         this.email = email;
-        this.setPassword(password);
+        this.password = password;
     }
 }
