@@ -1,9 +1,9 @@
 package com.backend.situ.service;
 
 import com.backend.situ.entity.UserCredentials;
-import com.backend.situ.model.ChangePasswordForm;
-import com.backend.situ.model.LogInFrom;
-import com.backend.situ.model.SignUpForm;
+import com.backend.situ.model.ChangePasswordDTO;
+import com.backend.situ.model.LoginDTO;
+import com.backend.situ.model.SignupDTO;
 import com.backend.situ.repository.AuthRepository;
 import com.backend.situ.security.JWTUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,22 +16,23 @@ import java.security.SecureRandom;
 public class AuthService {
 
     @Autowired
-    private AuthRepository authRepository;
+    private final AuthRepository authRepository;
 
     @Autowired
-    private JWTUtil jwtUtil;
+    private final JWTUtil jwtUtil;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Autowired
-    public AuthService(AuthRepository authRepository) {
+    public AuthService(AuthRepository authRepository, JWTUtil jwtUtil) {
         this.authRepository = authRepository;
+        this.jwtUtil = jwtUtil;
     }
 
-    public String doLogin(LogInFrom form) {
+    public String doLogin(LoginDTO form) {
         UserCredentials user = this.authRepository.findByEmail(form.email());
 
-        if (user == null || !passwordEncoder.matches(form.password(), user.getPassword())) {
+        if (user == null || !passwordEncoder.matches(form.password(), user.encodedPassword)) {
             return null;
         }
 
@@ -52,7 +53,7 @@ public class AuthService {
         return password.toString();
     }
 
-    public String signup(SignUpForm form) {
+    public String signup(SignupDTO form) {
         String randomPassword = generateRandomPassword();
         String encodedPassword = passwordEncoder.encode(randomPassword);
 
@@ -65,15 +66,15 @@ public class AuthService {
         return "Email: " + form.email() + " - Password: " + randomPassword;
     }
 
-    public boolean changePassword(ChangePasswordForm form) {
-        UserCredentials user = this.authRepository.findByEmail(form.getEmail());
+    public boolean changePassword(ChangePasswordDTO form) {
+        // TODO: obtener email desde la cookie ocn un interceptor y simplificar el DTO
+        UserCredentials user = this.authRepository.findByEmail(form.email());
 
-        if (user == null || !passwordEncoder.matches(form.getCurrentPassword(), user.getPassword())) {
+        if (user == null || !passwordEncoder.matches(form.currentPassword(), user.encodedPassword)) {
             return false;
         }
 
-        String encodedNewPassword = passwordEncoder.encode(form.getNewPassword());
-        user.setPassword(encodedNewPassword);
+        user.encodedPassword = passwordEncoder.encode(form.newPassword());
         authRepository.save(user);
         return true;
     }

@@ -1,6 +1,6 @@
 package com.backend.situ.model;
 
-public record LogInFrom(
+public record LoginDTO(
         String email,
         String password,
         Boolean rememberMe

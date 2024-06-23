@@ -1,6 +1,6 @@
 package com.backend.situ.model;
 
-public record SignUpForm(
+public record SignupDTO(
     String companyName,
     String email,
     String phone,

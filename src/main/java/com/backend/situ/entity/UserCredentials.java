@@ -14,20 +14,10 @@ public class UserCredentials {
     public String email;
 
     @Column(name = "password_hash", nullable = false)
-    private String password;
+    public String encodedPassword;
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public UserCredentials() { }
-
-    public UserCredentials(String email, String password) {
+    public UserCredentials(String email, String encodedPassword) {
         this.email = email;
-        this.password = password;
+        this.encodedPassword = encodedPassword;
     }
 }
