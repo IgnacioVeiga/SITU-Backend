@@ -58,7 +58,7 @@ public class AuthService {
         String encodedPassword = passwordEncoder.encode(randomPassword);
 
         UserCredentials newUser = new UserCredentials(form.email(), encodedPassword);
-        authRepository.save(newUser);
+//        authRepository.save(newUser);
 
         // TODO: guardar en la DB el resto de los datos del formulario
 

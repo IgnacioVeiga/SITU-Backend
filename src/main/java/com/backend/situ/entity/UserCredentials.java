@@ -16,6 +16,8 @@ public class UserCredentials {
     @Column(name = "password_hash", nullable = false)
     public String encodedPassword;
 
+    public UserCredentials() { }
+
     public UserCredentials(String email, String encodedPassword) {
         this.email = email;
         this.encodedPassword = encodedPassword;
