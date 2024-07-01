@@ -36,7 +36,7 @@ public class AuthService {
             return null;
         }
 
-        return jwtUtil.generateToken(user);
+        return jwtUtil.getToken(user);
     }
 
     public String generateRandomPassword() {
@@ -67,7 +67,7 @@ public class AuthService {
     }
 
     public boolean changePassword(ChangePasswordDTO form) {
-        // TODO: obtener email desde la cookie ocn un interceptor y simplificar el DTO
+        // TODO: obtener email desde la cookie con un interceptor y simplificar el DTO
         UserCredentials user = this.authRepository.findByEmail(form.email());
 
         if (user == null || !passwordEncoder.matches(form.currentPassword(), user.encodedPassword)) {
