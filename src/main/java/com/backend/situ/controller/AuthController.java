@@ -1,7 +1,9 @@
 package com.backend.situ.controller;
 
+import com.backend.situ.enums.UserRole;
 import com.backend.situ.model.ChangePasswordDTO;
 import com.backend.situ.model.LoginDTO;
+import com.backend.situ.model.SessionDTO;
 import com.backend.situ.model.SignupDTO;
 import com.backend.situ.service.AuthService;
 import jakarta.servlet.http.Cookie;
@@ -21,7 +23,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Void> login(
+    public ResponseEntity<SessionDTO> login(
             @RequestBody LoginDTO form,
             HttpServletResponse response
     ) {
@@ -37,7 +39,11 @@ public class AuthController {
                 cookie.setMaxAge(-1); // Sesión actual del navegador
             }
             response.addCookie(cookie);
-            return ResponseEntity.ok().build();
+
+            // TEMPORAL, implementar y refactorizar las funciones necesarias
+            SessionDTO session = this.authService.getSessionData(1);
+
+            return ResponseEntity.ok(session);
         } else {
             return ResponseEntity.status(401).build();
         }
@@ -66,6 +72,20 @@ public class AuthController {
             return ResponseEntity.ok("¡Contraseña modificada con éxito!");
         } else {
             return ResponseEntity.status(400).body("Credenciales invalidas");
+        }
+    }
+
+    @GetMapping("/get-session")
+    public ResponseEntity<SessionDTO> getSession(){
+        // TODO: get from cookie
+        Integer userId = 1;
+        SessionDTO session = this.authService.getSessionData(userId);
+
+        if (session != null) {
+            return ResponseEntity.ok(session);
+        }
+        else {
+            return ResponseEntity.status(404).body(null);
         }
     }
 }
