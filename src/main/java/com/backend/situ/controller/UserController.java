@@ -22,10 +22,10 @@ public class UserController {
     }
 
     @GetMapping("/list/{pageIndex}/{pageSize}/{companyId}")
-    public Page<User> list(@PathVariable("pageIndex") int pageIndex,
-                           @PathVariable("pageSize") int pageSize,
-                           @PathVariable("companyId") int companyId) {
-        return this.userService.listUsers(pageIndex, pageSize,companyId);
+    public Page<User> list(@PathVariable("pageIndex") Integer pageIndex,
+                           @PathVariable("pageSize") Integer pageSize,
+                           @PathVariable("companyId") Long companyId) {
+        return this.userService.listUsers(pageIndex, pageSize, companyId);
     }
 
     @GetMapping("/get/{id}")

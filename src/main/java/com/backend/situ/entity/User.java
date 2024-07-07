@@ -3,6 +3,7 @@ package com.backend.situ.entity;
 import com.backend.situ.entity.image.ProfileImage;
 import com.backend.situ.enums.UserRole;
 import jakarta.persistence.*;
+import org.hibernate.annotations.ColumnTransformer;
 
 @Entity
 @Table(name = "users", schema = "public")
@@ -29,16 +30,15 @@ public class User {
     private String lastName;
 
     @Enumerated(EnumType.STRING)
+    @ColumnTransformer(write = "?::user_role")
     @Column(name = "role")
     private UserRole role;
 
     public User() {
     }
 
-    public User(Long id, Company company, ProfileImage profileImage, Integer dni, String firstName, String lastName, UserRole role) {
-        this.id = id;
+    public User(Company company, Integer dni, String firstName, String lastName, UserRole role) {
         this.company = company;
-        this.profileImage = profileImage;
         this.dni = dni;
         this.firstName = firstName;
         this.lastName = lastName;

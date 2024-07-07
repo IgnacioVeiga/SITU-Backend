@@ -13,7 +13,7 @@ public class Company {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "logo_filename", nullable = false)
+    @Column(name = "logo_filename")
     private String logo_filename;
 
     public Long getId() {
@@ -43,8 +43,11 @@ public class Company {
     public Company() {
     }
 
-    public Company(Long id, String name, String logoPath) {
-        this.id = id;
+    public Company(String name) {
+        this.name = name;
+    }
+
+    public Company(String name, String logoPath) {
         this.name = name;
         this.logo_filename = logoPath;
     }

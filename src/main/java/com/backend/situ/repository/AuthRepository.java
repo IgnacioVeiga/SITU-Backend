@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface AuthRepository extends JpaRepository<UserCredentials, Integer> {
+public interface AuthRepository extends JpaRepository<UserCredentials, Long> {
     UserCredentials findByEmail(String email);
+
+    UserCredentials findByUserId(Long userId);
 }

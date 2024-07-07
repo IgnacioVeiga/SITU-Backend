@@ -8,5 +8,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    Page<User> findByCompanyId(int companyId, Pageable pageable);
+    Page<User> findByCompanyId(Long companyId, Pageable pageable);
+
+    Boolean existsByDni(Integer dni);
 }

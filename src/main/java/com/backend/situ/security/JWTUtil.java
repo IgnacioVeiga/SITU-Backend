@@ -24,12 +24,11 @@ public class JWTUtil {
         return getToken(new HashMap<>(), user);
     }
 
-    private String getToken(Map<String,Object> extraClaims, UserCredentials user) {
+    private String getToken(Map<String,Object> extraClaims, UserCredentials userCredentials) {
         return Jwts
                 .builder()
                 .claims(extraClaims)
-                .claim("email", user.email)
-                .subject(Integer.toString(user.userId))
+                .subject(userCredentials.getEmail())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis()+1000*60*24))
                 .signWith(getKey())
@@ -40,13 +39,14 @@ public class JWTUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String getUsernameFromToken(String token) {
+    public String getSubjectFromToken(String token) {
         return getClaim(token, Claims::getSubject);
     }
 
+    // TODO: implementar UserDetails en la clase UserCredentials
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username=getUsernameFromToken(token);
-        return (username.equals(userDetails.getUsername())&& !isTokenExpired(token));
+        final String subject = getSubjectFromToken(token);
+        return (subject.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
     private Claims getAllClaims(String token)
@@ -70,7 +70,7 @@ public class JWTUtil {
         return getClaim(token, Claims::getExpiration);
     }
 
-    private boolean isTokenExpired(String token)
+    public boolean isTokenExpired(String token)
     {
         return getExpiration(token).before(new Date());
     }
