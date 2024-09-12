@@ -1,10 +1,15 @@
 package com.backend.situ.entity;
 
 import jakarta.persistence.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.List;
 
 @Entity
 @Table(name = "user_credentials", schema = "public")
-public class UserCredentials {
+public class UserCredentials implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -43,19 +48,46 @@ public class UserCredentials {
         this.user = user;
     }
 
-    public String getEmail() {
-        return email;
+    public void setEncodedPassword(String encodedPassword) {
+        this.encodedPassword = encodedPassword;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
     }
 
-    public String getEncodedPassword() {
+    @Override
+    public String getPassword() {
         return encodedPassword;
     }
 
-    public void setEncodedPassword(String encodedPassword) {
-        this.encodedPassword = encodedPassword;
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+//        return UserDetails.super.isAccountNonExpired();
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+//        return UserDetails.super.isAccountNonLocked();
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+//        return UserDetails.super.isCredentialsNonExpired();
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+//        return UserDetails.super.isEnabled();
+        return true;
     }
 }

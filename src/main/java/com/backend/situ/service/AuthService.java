@@ -3,14 +3,11 @@ package com.backend.situ.service;
 import com.backend.situ.entity.Company;
 import com.backend.situ.entity.User;
 import com.backend.situ.entity.UserCredentials;
-import com.backend.situ.entity.image.ProfileImage;
-import com.backend.situ.enums.UserRole;
 import com.backend.situ.model.ChangePasswordDTO;
 import com.backend.situ.model.LoginDTO;
 import com.backend.situ.model.SessionDTO;
 import com.backend.situ.model.SignupDTO;
 import com.backend.situ.repository.AuthRepository;
-import com.backend.situ.security.JWTUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,24 +24,24 @@ public class AuthService {
     private final AuthRepository authRepository;
 
     @Autowired
-    private final JWTUtil jwtUtil;
+    private final JWTService jwtService;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Autowired
-    public AuthService(AuthRepository authRepository, JWTUtil jwtUtil) {
+    public AuthService(AuthRepository authRepository, JWTService jwtService) {
         this.authRepository = authRepository;
-        this.jwtUtil = jwtUtil;
+        this.jwtService = jwtService;
     }
 
     public SessionDTO doLogin(LoginDTO form, HttpServletResponse response) {
-        UserCredentials userCred = this.authRepository.findByEmail(form.email());
+        UserCredentials userCred = this.authRepository.findByEmail(form.email()).orElse(null);
 
-        if (userCred == null || !passwordEncoder.matches(form.password(), userCred.getEncodedPassword())) {
+        if (userCred == null || !passwordEncoder.matches(form.password(), userCred.getPassword())) {
             return null;
         }
 
-        String token = jwtUtil.getToken(userCred);
+        String token = jwtService.getToken(userCred);
         if (token == null) {
             return null;
         }
@@ -94,9 +91,9 @@ public class AuthService {
     }
 
     public boolean changePassword(ChangePasswordDTO form) {
-        UserCredentials user = this.authRepository.findByEmail(form.email());
+        UserCredentials user = this.authRepository.findByEmail(form.email()).orElse(null);
 
-        if (user == null || !passwordEncoder.matches(form.currentPassword(), user.getEncodedPassword())) {
+        if (user == null || !passwordEncoder.matches(form.currentPassword(), user.getPassword())) {
             return false;
         }
 
@@ -107,10 +104,12 @@ public class AuthService {
     }
 
     public SessionDTO getSessionData(String authToken) {
-        if (jwtUtil.isTokenExpired(authToken)) return null;
+        if (jwtService.isTokenExpired(authToken)) return null;
 
-        String email = jwtUtil.getSubjectFromToken(authToken);
-        UserCredentials userCredentials = this.authRepository.findByEmail(email);
+        String email = jwtService.getSubjectFromToken(authToken);
+        UserCredentials userCredentials = this.authRepository.findByEmail(email).orElse(null);
+
+        if (userCredentials == null) return null;
 
         return getSessionData(userCredentials);
     }
@@ -123,7 +122,7 @@ public class AuthService {
                 user.getId(),
                 company.getId(),
                 company.getLogo_filename(),
-                userCredentials.getEmail(),
+                userCredentials.getPassword(),
                 user.getFirstName() + " " + user.getLastName(),
                 user.getRole()
         );

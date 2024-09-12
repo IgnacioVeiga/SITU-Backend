@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/situ/images")
+@RequestMapping("/api/situ/images")
 public class ImageController {
     private final ImageService imageService;
 

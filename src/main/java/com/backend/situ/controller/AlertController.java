@@ -7,7 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/situ/alerts")
+@RequestMapping("/api/situ/alerts")
 public class AlertController {
     private final AlertService alertService;
 

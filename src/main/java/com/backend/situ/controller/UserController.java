@@ -12,7 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 
 @RestController
-@RequestMapping("/situ/users")
+@RequestMapping("/api/situ/users")
 public class UserController {
     private final UserService userService;
 

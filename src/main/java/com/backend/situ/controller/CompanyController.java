@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/situ/companies")
+@RequestMapping("/api/situ/companies")
 public class CompanyController {
     private final CompanyService companyService;
 

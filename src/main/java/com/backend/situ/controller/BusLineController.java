@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/situ/bus")
+@RequestMapping("/api/situ/bus")
 public class BusLineController {
     private final BusLineService busLineService;
 

@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 
 @RestController
-@RequestMapping("situ/auth")
+@RequestMapping("/api/situ/auth")
 public class AuthController {
     @Autowired
     private final AuthService authService;

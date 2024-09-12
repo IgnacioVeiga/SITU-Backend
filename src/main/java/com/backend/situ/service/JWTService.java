@@ -1,4 +1,4 @@
-package com.backend.situ.security;
+package com.backend.situ.service;
 
 import com.backend.situ.entity.UserCredentials;
 import io.jsonwebtoken.Claims;
@@ -7,7 +7,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -15,10 +15,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-@Component
-public class JWTUtil {
+@Service
+public class JWTService {
     @Value("${jwt.secret}")
     private String SECRET_KEY;
+
+    private final long JWT_EXP_TIME = System.currentTimeMillis()+1000*60*24;
 
     public String getToken(UserCredentials user) {
         return getToken(new HashMap<>(), user);
@@ -28,9 +30,9 @@ public class JWTUtil {
         return Jwts
                 .builder()
                 .claims(extraClaims)
-                .subject(userCredentials.getEmail())
+                .subject(userCredentials.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis()+1000*60*24))
+                .expiration(new Date(JWT_EXP_TIME))
                 .signWith(getKey())
                 .compact();
     }
@@ -40,16 +42,15 @@ public class JWTUtil {
     }
 
     public String getSubjectFromToken(String token) {
-        return getClaim(token, Claims::getSubject);
+        return extractClaim(token, Claims::getSubject);
     }
 
-    // TODO: implementar UserDetails en la clase UserCredentials
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String subject = getSubjectFromToken(token);
         return (subject.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
-    private Claims getAllClaims(String token)
+    private Claims extractAllClaims(String token)
     {
         return Jwts
                 .parser()
@@ -59,15 +60,15 @@ public class JWTUtil {
                 .getPayload();
     }
 
-    public <T> T getClaim(String token, Function<Claims,T> claimsResolver)
+    public <T> T extractClaim(String token, Function<Claims,T> claimsResolver)
     {
-        final Claims claims=getAllClaims(token);
+        final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
     private Date getExpiration(String token)
     {
-        return getClaim(token, Claims::getExpiration);
+        return extractClaim(token, Claims::getExpiration);
     }
 
     public boolean isTokenExpired(String token)
