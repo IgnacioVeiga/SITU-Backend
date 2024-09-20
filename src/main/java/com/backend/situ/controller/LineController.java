@@ -3,10 +3,7 @@ package com.backend.situ.controller;
 import com.backend.situ.entity.Line;
 import com.backend.situ.service.LineService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -27,5 +24,18 @@ public class LineController {
         return lineService.getLineById(id);
     }
 
-    // TODO: Add more endpoints
+    @PostMapping
+    public Line createLine(@RequestBody Line line) {
+        return lineService.createLine(line);
+    }
+
+    @PutMapping("/{id}")
+    public Line updateLine(@PathVariable Long id, @RequestBody Line lineDetails) {
+        return lineService.updateLine(id, lineDetails);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteLine(@PathVariable Long id) {
+        lineService.deleteLine(id);
+    }
 }

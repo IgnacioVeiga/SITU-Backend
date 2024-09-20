@@ -35,15 +35,15 @@ INSERT INTO lines (number, name, company_id) VALUES
 (250, '250', 1),
 (500, '500', 1);
 
--- Insert routes for each line
-INSERT INTO routes (name, line_id) VALUES
-('Pilar - Palermo', 1),
-('Zarate - Once', 1),
-('Lujan - Retiro', 1),
-('San Fernando - Tigre', 2),
-('San Isidro - Victoria', 2),
-('Moron - Merlo', 3),
-('Moron - Ituzaingo', 3);
+-- Insert routes for each line with coordinates
+INSERT INTO routes (name, line_id, coordinates) VALUES
+('Pilar - Palermo', 1, ST_SetSRID(ST_MakeLine(ST_MakePoint(-58.914191, -34.458657), ST_MakePoint(-58.430314, -34.588045)), 4326)), -- Pilar - Palermo
+('Zarate - Once', 1, ST_SetSRID(ST_MakeLine(ST_MakePoint(-59.028798, -34.097301), ST_MakePoint(-58.401184, -34.609880)), 4326)),  -- Zarate - Once
+('Lujan - Retiro', 1, ST_SetSRID(ST_MakeLine(ST_MakePoint(-59.103082, -34.566998), ST_MakePoint(-58.373892, -34.590442)), 4326)),  -- Lujan - Retiro
+('San Fernando - Tigre', 2, ST_SetSRID(ST_MakeLine(ST_MakePoint(-58.546665, -34.448548), ST_MakePoint(-58.579599, -34.424947)), 4326)),  -- San Fernando - Tigre
+('San Isidro - Victoria', 2, ST_SetSRID(ST_MakeLine(ST_MakePoint(-58.523641, -34.471748), ST_MakePoint(-58.558342, -34.451122)), 4326)),  -- San Isidro - Victoria
+('Moron - Merlo', 3, ST_SetSRID(ST_MakeLine(ST_MakePoint(-58.619780, -34.653300), ST_MakePoint(-58.728260, -34.676391)), 4326)),  -- Moron - Merlo
+('Moron - Ituzaingo', 3, ST_SetSRID(ST_MakeLine(ST_MakePoint(-58.619780, -34.653300), ST_MakePoint(-58.591600, -34.646000)), 4326));  -- Moron - Ituzaingo
 
 -- Insert stops at different locations with coordinates in the location column
 INSERT INTO stops (name, location) VALUES
