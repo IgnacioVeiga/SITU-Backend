@@ -21,25 +21,14 @@ public class StopService {
     }
 
     public List<StopDTO> getStopsByRoute(Long routeId) {
-        List<Object[]> results_stops_ids = stopRepository.findStopsIdByRouteId(routeId);
-
-        List<Long> stops_ids = new ArrayList<>();
-        for (Object[] result : results_stops_ids) {
-            Long id = ((Number) result[0]).longValue();
-            stops_ids.add(id);
-        }
-
+        List<Object[]> results_stops = stopRepository.findStopsByRoute(routeId);
         List<StopDTO> stops = new ArrayList<>();
-        for (Long stop_id : stops_ids)
-        {
-            List<Object[]> results_stops = stopRepository.findStopsById(stop_id);
-            for (Object[] result : results_stops) {
-                Long id = ((Number) result[0]).longValue();
-                String name = (String) result[1];
-                String location = (String) result[2];
 
-                stops.add(new StopDTO(id, name, location));
-            }
+        for (Object[] result : results_stops) {
+            Long id = ((Number) result[0]).longValue();
+            String name = (String) result[1];
+            String location = (String) result[2];
+            stops.add(new StopDTO(id, name, location));
         }
 
         return stops;
