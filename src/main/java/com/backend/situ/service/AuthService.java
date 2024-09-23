@@ -11,10 +11,13 @@ import com.backend.situ.repository.AuthRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.HashMap;
 
 @Service
@@ -42,37 +45,26 @@ public class AuthService {
         }
 
         String token = jwtService.getToken(userCred);
-        if (token == null) {
-            return null;
-        }
-
-        // Configura la cookie con el token
-        Cookie cookie = new Cookie("authToken", token);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        if (form.rememberMe()) {
-            cookie.setMaxAge(720 * 60 * 60); // 720 horas (30 días)
-        } else {
-            cookie.setMaxAge(-1); // Sesión actual del navegador
-        }
-        response.addCookie(cookie);
+        if (token == null) return null;
+        addAuthCookie(response, token);
 
         return this.getSessionData(userCred);
     }
 
     public String generateRandomPassword() {
         int length = 10;
-        String charSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         SecureRandom random = new SecureRandom();
-        StringBuilder password = new StringBuilder();
+        byte[] passwordBytes = new byte[length];
+        random.nextBytes(passwordBytes);
 
-        for (int i = 0; i < length; i++) {
-            int randomIndex = random.nextInt(charSet.length());
-            password.append(charSet.charAt(randomIndex));
+        StringBuilder password = new StringBuilder();
+        for (byte b : passwordBytes) {
+            password.append((char) ((b & 0x7F) % 26 + 'a')); // Limita a caracteres alfabéticos
         }
 
         return password.toString();
     }
+
 
     public HashMap<String, String> signup(SignupDTO form, User user) {
         String randomPassword = generateRandomPassword();
@@ -122,17 +114,45 @@ public class AuthService {
                 user.getId(),
                 company.getId(),
                 company.getLogo_filename(),
-                userCredentials.getPassword(),
+                userCredentials.getUsername(),
                 user.getFirstName() + " " + user.getLastName(),
                 user.getRole()
         );
     }
 
+    public void addAuthCookie(HttpServletResponse response, String token) {
+        // TODO: usar https según una variable de entorno
+        ResponseCookie cookie = ResponseCookie.from("authToken", token)
+                .httpOnly(true)
+                .sameSite("Lax")  // "None" - "Lax" - "Strict"
+                .path("/")
+                .maxAge(Duration.ofDays(1))
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
     public void destroyCookie(HttpServletResponse response) {
-        Cookie cookie = new Cookie("authToken", null);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0); // Elimina la cookie
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from("authToken", "")
+                .httpOnly(true)
+                .sameSite("Lax")  // "None" - "Lax" - "Strict"
+                .path("/")
+                .maxAge(Duration.ZERO)
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    public boolean validateAndRenewToken(String authToken, HttpServletResponse response) {
+        if (jwtService.isTokenExpired(authToken)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return false;
+        }
+
+        if (jwtService.isTokenNearExpiry(authToken)) {
+            String newToken = jwtService.renewToken(authToken);
+            this.addAuthCookie(response, newToken);
+        }
+        return true;
     }
 }

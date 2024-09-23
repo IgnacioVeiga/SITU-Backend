@@ -48,6 +48,10 @@ public class UserCredentials implements UserDetails {
         this.user = user;
     }
 
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public void setEncodedPassword(String encodedPassword) {
         this.encodedPassword = encodedPassword;
     }
