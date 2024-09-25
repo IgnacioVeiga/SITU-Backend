@@ -69,7 +69,6 @@ public class AuthController {
         }
         else {
             company = new Company(form.companyName());
-            company = this.companyService.createCompany(company);
         }
 
         // Se verifica si no existe el usuario
@@ -78,6 +77,7 @@ public class AuthController {
             return ResponseEntity.status(400).body(resp);
         }
         else{
+            company = this.companyService.createCompany(company);
             user = new User(
                     company,
                     form.dni(),
@@ -92,15 +92,19 @@ public class AuthController {
         return ResponseEntity.ok(resp);
     }
 
-    @PostMapping("/change-password")
-    public ResponseEntity<String> changePassword(@RequestBody ChangePasswordDTO form) {
-        boolean isChanged = this.authService.changePassword(form);
+    @PostMapping("/password")
+    public ResponseEntity<String> updatePassword(
+            @CookieValue("authToken") String authToken,
+            @RequestBody ChangePasswordDTO form
+    ) {
+        int statusCode = this.authService.changePassword(authToken, form);
 
-        if (!isChanged) {
-            return ResponseEntity.status(400).body("Credenciales invalidas");
-        }
-
-        return ResponseEntity.ok("¡Contraseña modificada con éxito!");
+        return switch (statusCode) {
+            case 200 -> ResponseEntity.ok("¡Contraseña modificada con éxito!");
+            case 400 -> ResponseEntity.status(statusCode).body("Contraseña actual incorrecta");
+            case 404 -> ResponseEntity.status(statusCode).body("Usuario no encontrado");
+            default -> ResponseEntity.status(statusCode).body("Error");
+        };
     }
 
     @GetMapping("/get-session")
@@ -108,7 +112,7 @@ public class AuthController {
         SessionDTO session = this.authService.getSessionData(authToken);
 
         if (session == null) {
-            return ResponseEntity.status(404).body(null);
+            return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED).body(null);
         }
 
         return ResponseEntity.ok(session);

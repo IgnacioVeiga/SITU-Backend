@@ -82,17 +82,21 @@ public class AuthService {
         return resp;
     }
 
-    public boolean changePassword(ChangePasswordDTO form) {
-        UserCredentials user = this.authRepository.findByEmail(form.email()).orElse(null);
+    public int changePassword(String authToken, ChangePasswordDTO form) {
+        String email = jwtService.getSubjectFromToken(authToken);
+        UserCredentials user = this.authRepository.findByEmail(email).orElse(null);
+        if (user == null) return HttpServletResponse.SC_NOT_FOUND;
 
-        if (user == null || !passwordEncoder.matches(form.currentPassword(), user.getPassword())) {
-            return false;
+        if (form.currentPassword().isEmpty()) return HttpServletResponse.SC_BAD_REQUEST;
+
+        if (!passwordEncoder.matches(form.currentPassword(), user.getPassword())) {
+            return HttpServletResponse.SC_BAD_REQUEST;
         }
 
         String newEncodedPassword = passwordEncoder.encode(form.newPassword());
         user.setEncodedPassword(newEncodedPassword);
         this.authRepository.save(user);
-        return true;
+        return HttpServletResponse.SC_OK;
     }
 
     public SessionDTO getSessionData(String authToken) {

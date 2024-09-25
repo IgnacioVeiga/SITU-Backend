@@ -16,7 +16,11 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authInterceptor)
                 .addPathPatterns("/api/situ/**")
-                .excludePathPatterns("/api/situ/auth/**");
+                .excludePathPatterns(
+                        "/api/situ/auth/login",
+                        "/api/situ/auth/signup",
+                        "/api/situ/auth/get-session"
+                );
     }
 
     @Override
