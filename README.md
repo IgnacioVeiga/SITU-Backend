@@ -3,13 +3,13 @@ Backend for SITU-WebApp
 
 ## Required
 * Java 21
-* Docker
+* Postgres database
+* Docker (optional for <a href="files/postgres/init.sql">initialization de database</a>)
 
 ## Build
-1. Create a `.env` file and see the `.env.txt_file_example_of_.env.txt` for reference.
-2. Make sure that the Docker engine is running.
-3. Run this command in the root folder of this repository in the terminal:
-```bash
+1. See the <a href="EnvironmentVariables.md">environment variables</a> section.
+2. (Optional) Make sure that the Docker engine is running and run this command in the root folder of this repository in terminal:
+    ```bash
     docker-compose down && docker-compose up -d
-```
-4. Build and run with some IDE (IntelliJ or Visual Studio Code) or use the terminal.
+    ```
+3. Build and run with some IDE (IntelliJ or Visual Studio Code) or use the terminal.
