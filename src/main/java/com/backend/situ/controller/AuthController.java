@@ -56,6 +56,7 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
+    // TODO: must use @Transactional?
     @PostMapping("/signup")
     public ResponseEntity<HashMap<String, String>> signup(@RequestBody SignupDTO form) {
         Company company;
@@ -64,7 +65,7 @@ public class AuthController {
 
         // Se verifica si no existe la empresa
         if (this.companyService.existCompanyName(form.companyName())) {
-            resp.put("Error", "La empresa ya está registrada");
+            resp.put("message", "La empresa ya está registrada");
             return ResponseEntity.status(400).body(resp);
         }
         else {
@@ -73,7 +74,7 @@ public class AuthController {
 
         // Se verifica si no existe el usuario
         if (this.userService.existDNI(form.dni())) {
-            resp.put("Error", "DNI ya ocupado en una empresa");
+            resp.put("message", "DNI ya ocupado en una empresa");
             return ResponseEntity.status(400).body(resp);
         }
         else{
@@ -88,7 +89,8 @@ public class AuthController {
             user = this.userService.createUser(user);
         }
 
-        resp = this.authService.signup(form, user);
+        this.authService.signup(form, user);
+        resp.put("message", "¡Registro exitoso!");
         return ResponseEntity.ok(resp);
     }
 

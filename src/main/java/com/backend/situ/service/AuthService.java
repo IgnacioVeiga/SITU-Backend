@@ -8,6 +8,7 @@ import com.backend.situ.model.LoginDTO;
 import com.backend.situ.model.SessionDTO;
 import com.backend.situ.model.SignupDTO;
 import com.backend.situ.repository.AuthRepository;
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,13 +28,17 @@ public class AuthService {
     private final AuthRepository authRepository;
 
     @Autowired
+    private final EmailService emailService;
+
+    @Autowired
     private final JWTService jwtService;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Autowired
-    public AuthService(AuthRepository authRepository, JWTService jwtService) {
+    public AuthService(AuthRepository authRepository, EmailService emailService, JWTService jwtService) {
         this.authRepository = authRepository;
+        this.emailService = emailService;
         this.jwtService = jwtService;
     }
 
@@ -66,20 +71,18 @@ public class AuthService {
     }
 
 
-    public HashMap<String, String> signup(SignupDTO form, User user) {
+    public void signup(SignupDTO form, User user) {
         String randomPassword = generateRandomPassword();
         String encodedPassword = passwordEncoder.encode(randomPassword);
 
         UserCredentials newUser = new UserCredentials(user, form.email(), encodedPassword);
         this.authRepository.save(newUser);
-
-        // TODO: aún no hay nada definido que hacer con el teléfono y las notas recibidas del formulario
-
-        // ¡TEMPORAL! En un entorno de producción, la contraseña se envía por email al usuario.
-        HashMap<String, String> resp = new HashMap<>();
-        resp.put("Email", form.email());
-        resp.put("Password", randomPassword);
-        return resp;
+        try {
+            this.emailService.sendRegistrationEmail(form.email(), randomPassword);
+        } catch (MessagingException e) {
+            System.out.println(e.getMessage());
+        }
+        // TODO: Aún no hay nada definido que hacer con el teléfono y las notas recibidas del formulario
     }
 
     public int changePassword(String authToken, ChangePasswordDTO form) {
