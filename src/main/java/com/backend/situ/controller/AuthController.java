@@ -93,18 +93,29 @@ public class AuthController {
     }
 
     @PostMapping("/password")
-    public ResponseEntity<String> updatePassword(
-            @CookieValue("authToken") String authToken,
-            @RequestBody ChangePasswordDTO form
+    public ResponseEntity<HashMap<String, String>> updatePassword(
+            @RequestBody ChangePasswordDTO form,
+            @CookieValue("authToken") String authToken
     ) {
+        HashMap<String, String> resp = new HashMap<>();
         int statusCode = this.authService.changePassword(authToken, form);
 
-        return switch (statusCode) {
-            case 200 -> ResponseEntity.ok("¡Contraseña modificada con éxito!");
-            case 400 -> ResponseEntity.status(statusCode).body("Contraseña actual incorrecta");
-            case 404 -> ResponseEntity.status(statusCode).body("Usuario no encontrado");
-            default -> ResponseEntity.status(statusCode).body("Error");
-        };
+        // TODO: refactor
+        switch (statusCode) {
+            case 200:
+                resp.put("message", "Contraseña modificada");
+                break;
+            case 400:
+                resp.put("message", "Contraseña actual incorrecta");
+                break;
+            case 404:
+                resp.put("message", "Usuario no encontrado");
+                break;
+            default:
+                resp.put("message", "Hubo un error desconocido");
+                break;
+        }
+        return ResponseEntity.status(statusCode).body(resp);
     }
 
     @GetMapping("/get-session")

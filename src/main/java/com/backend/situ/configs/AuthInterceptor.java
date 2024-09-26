@@ -25,6 +25,11 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        // Ignore OPTIONS
+        if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
+            return true; // Allow preflight requests to pass without authentication
+        }
+
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
