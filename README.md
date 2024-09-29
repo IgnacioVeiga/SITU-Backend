@@ -1,5 +1,5 @@
 # SITU-Backend
-Backend for (SITU-WebApp)[https://github.com/IgnacioVeiga/SITU_WebApp]
+Backend for [SITU-WebApp](https://github.com/IgnacioVeiga/SITU_WebApp)
 
 ## About SITU
 /// To be redacted ///
