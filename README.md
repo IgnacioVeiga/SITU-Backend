@@ -4,7 +4,7 @@ Backend for SITU-WebApp
 ## Required
 * Java 21
 * Postgres database
-* Docker (optional for <a href="files/postgres/init.sql">initialization de database</a>)
+* Docker (Optional to initialize the <a href="docker-compose.yml">container</a> with the <a href="files/postgres/init.sql">database</a>)
 
 ## Build
 1. See the <a href="EnvironmentVariables.md">environment variables</a> section.
