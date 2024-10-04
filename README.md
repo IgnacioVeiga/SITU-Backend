@@ -5,7 +5,7 @@ Backend for [SITU-WebApp](https://github.com/IgnacioVeiga/SITU-WebApp)
 /// To be redacted ///
 
 ## Required
-* Java 20 (to define)
+* Java 20+
 * Postgres database
 * Docker (Optional to initialize the <a href="docker-compose.yml">container</a> with the <a href="files/postgres/init.sql">database</a>)
 
