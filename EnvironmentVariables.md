@@ -24,6 +24,12 @@ For the secret key in the JWT service use a long base64 string, for example:
 JWT_SECRET=MUwtLVAtKjZJRVwjJT0jZj5lcDxIanY6R1BjPGEyP1V2eSxiXmErbWQhc2NRKHdK
 ```
 
+## Cookie - Secure
+(optional) Default value is “false” in development, set to “true” in production.
+```properties
+COOKIE_SECURE=true
+```
+
 ## CORS allowed origins
 (Optional) Only if you want to deploy to production: 
 ```properties

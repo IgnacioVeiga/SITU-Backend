@@ -12,6 +12,7 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -23,6 +24,8 @@ import java.util.HashMap;
 
 @Service
 public class AuthService {
+    @Value("${cookie.secure}")
+    private boolean secureCookie;
 
     @Autowired
     private final AuthRepository authRepository;
@@ -128,9 +131,9 @@ public class AuthService {
     }
 
     public void addAuthCookie(HttpServletResponse response, String token) {
-        // TODO: usar https según una variable de entorno
         ResponseCookie cookie = ResponseCookie.from("authToken", token)
                 .httpOnly(true)
+                .secure(secureCookie)
                 .sameSite("Lax")  // "None" - "Lax" - "Strict"
                 .path("/")
                 .maxAge(Duration.ofDays(1))
@@ -142,6 +145,7 @@ public class AuthService {
     public void destroyCookie(HttpServletResponse response) {
         ResponseCookie cookie = ResponseCookie.from("authToken", "")
                 .httpOnly(true)
+                .secure(secureCookie)
                 .sameSite("Lax")  // "None" - "Lax" - "Strict"
                 .path("/")
                 .maxAge(Duration.ZERO)
