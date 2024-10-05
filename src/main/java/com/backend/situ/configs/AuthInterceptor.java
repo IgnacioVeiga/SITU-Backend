@@ -8,6 +8,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -29,6 +30,12 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
             return true; // Allow preflight requests to pass without authentication
         }
+
+        String c = request.getHeader(HttpHeaders.COOKIE);
+        System.out.println("Header \"Cookie\" = " + c);
+
+        c = request.getHeader(HttpHeaders.SET_COOKIE);
+        System.out.println("Header \"Set cookie\" = " + c);
 
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
