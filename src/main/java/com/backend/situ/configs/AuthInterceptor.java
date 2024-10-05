@@ -31,15 +31,17 @@ public class AuthInterceptor implements HandlerInterceptor {
             return true; // Allow preflight requests to pass without authentication
         }
 
+        System.out.println("Request: " + request);
+
         String c = request.getHeader(HttpHeaders.COOKIE);
         System.out.println("Header \"Cookie\" = " + c);
 
         c = request.getHeader(HttpHeaders.SET_COOKIE);
-        System.out.println("Header \"Set cookie\" = " + c);
+        System.out.println("Header \"Set-Cookie\" = " + c);
 
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
-            System.out.println(request + "\nNo cookies found");
+            System.out.println("No cookies found");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
@@ -49,7 +51,7 @@ public class AuthInterceptor implements HandlerInterceptor {
                 .findFirst();
 
         if (authCookieOpt.isEmpty()) {
-            System.out.println("Cookie empty");
+            System.out.println("No authToken");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
