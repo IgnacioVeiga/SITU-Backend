@@ -32,6 +32,7 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
+            System.out.println(request + "\nNo cookies found");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
@@ -41,6 +42,7 @@ public class AuthInterceptor implements HandlerInterceptor {
                 .findFirst();
 
         if (authCookieOpt.isEmpty()) {
+            System.out.println("Cookie empty");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
@@ -49,12 +51,14 @@ public class AuthInterceptor implements HandlerInterceptor {
         try {
             String subject = jwtService.getSubjectFromToken(authToken);
             if (subject == null || subject.isEmpty() || subject.isBlank()) {
+                System.out.println("Invalid subject");
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return false;
             }
 
             return authService.validateAndRenewToken(authToken, response);
         } catch (ExpiredJwtException | MalformedJwtException e) {
+            System.out.println("Exception!\n" + e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
