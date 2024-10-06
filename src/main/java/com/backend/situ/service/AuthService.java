@@ -134,7 +134,9 @@ public class AuthService {
         ResponseCookie cookie = ResponseCookie.from("authToken", token)
                 .httpOnly(true)
                 .secure(secureCookie)
-                .sameSite("Lax")  // "None" - "Lax" - "Strict"
+                .sameSite(
+                        (secureCookie) ? "None" : "Lax"
+                )
                 .path("/")
                 .maxAge(Duration.ofDays(1))
                 .build();
@@ -146,7 +148,9 @@ public class AuthService {
         ResponseCookie cookie = ResponseCookie.from("authToken", "")
                 .httpOnly(true)
                 .secure(secureCookie)
-                .sameSite("Lax")  // "None" - "Lax" - "Strict"
+                .sameSite(
+                        (secureCookie) ? "None" : "Lax"
+                )
                 .path("/")
                 .maxAge(Duration.ZERO)
                 .build();
