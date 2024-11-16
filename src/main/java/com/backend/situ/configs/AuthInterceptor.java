@@ -8,7 +8,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -31,17 +30,8 @@ public class AuthInterceptor implements HandlerInterceptor {
             return true; // Allow preflight requests to pass without authentication
         }
 
-        System.out.println("Request: " + request);
-
-        String c = request.getHeader(HttpHeaders.COOKIE);
-        System.out.println("Header \"Cookie\" = " + c);
-
-        c = request.getHeader(HttpHeaders.SET_COOKIE);
-        System.out.println("Header \"Set-Cookie\" = " + c);
-
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
-            System.out.println("No cookies found");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
@@ -51,7 +41,6 @@ public class AuthInterceptor implements HandlerInterceptor {
                 .findFirst();
 
         if (authCookieOpt.isEmpty()) {
-            System.out.println("No authToken");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
@@ -60,7 +49,6 @@ public class AuthInterceptor implements HandlerInterceptor {
         try {
             String subject = jwtService.getSubjectFromToken(authToken);
             if (subject == null || subject.isEmpty() || subject.isBlank()) {
-                System.out.println("Invalid subject");
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return false;
             }

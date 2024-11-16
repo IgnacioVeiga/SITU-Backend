@@ -3,6 +3,7 @@ package com.backend.situ.service;
 import com.backend.situ.entity.Company;
 import com.backend.situ.entity.User;
 import com.backend.situ.entity.UserCredentials;
+import com.backend.situ.event.AuditEvent;
 import com.backend.situ.model.ChangePasswordDTO;
 import com.backend.situ.model.LoginDTO;
 import com.backend.situ.model.SessionDTO;
@@ -13,6 +14,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,26 +22,23 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.time.Duration;
-import java.util.HashMap;
 
 @Service
 public class AuthService {
     @Value("${cookie.secure}")
     private boolean secureCookie;
-
+    private final ApplicationEventPublisher eventPublisher;
     @Autowired
     private final AuthRepository authRepository;
-
     @Autowired
     private final EmailService emailService;
-
     @Autowired
     private final JWTService jwtService;
-
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Autowired
-    public AuthService(AuthRepository authRepository, EmailService emailService, JWTService jwtService) {
+    public AuthService(ApplicationEventPublisher eventPublisher, AuthRepository authRepository, EmailService emailService, JWTService jwtService) {
+        this.eventPublisher = eventPublisher;
         this.authRepository = authRepository;
         this.emailService = emailService;
         this.jwtService = jwtService;
@@ -56,6 +55,10 @@ public class AuthService {
         if (token == null) return null;
         addAuthCookie(response, token);
 
+        String details = "New login by user: " + userCred.getUsername();
+        AuditEvent auditEvent = new AuditEvent(this, "LOGIN_USER", userCred.getUsername(), details);
+        eventPublisher.publishEvent(auditEvent);
+
         return this.getSessionData(userCred);
     }
 
@@ -67,7 +70,7 @@ public class AuthService {
 
         StringBuilder password = new StringBuilder();
         for (byte b : passwordBytes) {
-            password.append((char) ((b & 0x7F) % 26 + 'a')); // Limita a caracteres alfabéticos
+            password.append((char) ((b & 0x7F) % 26 + 'a'));
         }
 
         return password.toString();
@@ -85,7 +88,12 @@ public class AuthService {
         } catch (MessagingException e) {
             System.out.println(e.getMessage());
         }
-        // TODO: Aún no hay nada definido que hacer con el teléfono y las notas recibidas del formulario
+
+        String details = "Signup by user: " + newUser.getUsername();
+        AuditEvent auditEvent = new AuditEvent(this, "SIGNUP_USER", newUser.getUsername(), details);
+        eventPublisher.publishEvent(auditEvent);
+
+        // TODO: Nothing definite yet to do with the phone and the notes received from the form.
     }
 
     public int changePassword(String authToken, ChangePasswordDTO form) {
@@ -102,6 +110,11 @@ public class AuthService {
         String newEncodedPassword = passwordEncoder.encode(form.newPassword());
         user.setEncodedPassword(newEncodedPassword);
         this.authRepository.save(user);
+
+        String details = "Password changed by user: " + user.getUsername();
+        AuditEvent auditEvent = new AuditEvent(this, "CHANGE_PASSWORD", user.getUsername(), details);
+        eventPublisher.publishEvent(auditEvent);
+
         return HttpServletResponse.SC_OK;
     }
 

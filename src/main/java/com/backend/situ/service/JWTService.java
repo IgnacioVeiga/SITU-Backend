@@ -60,7 +60,6 @@ public class JWTService {
     }
 
     public boolean isTokenNearExpiry(String token) {
-        // Verifica si el token va a expirar en los próximos 15 minutos
         Date expiration = getExpiration(token);
         return expiration.getTime() - System.currentTimeMillis() <= RENEW_THRESHOLD;
     }

@@ -33,25 +33,16 @@ public class ImageService {
             Long userId
     ){
         try {
-            // Leer la imagen original en un arreglo de bytes
             byte[] originalImageBytes = imgFile.getBytes();
 
-            // Convertir la imagen original a BufferedImage
             ByteArrayInputStream inputStream = new ByteArrayInputStream(originalImageBytes);
             BufferedImage originalImage = ImageIO.read(inputStream);
-
-            // Crear un ByteArrayOutputStream para escribir la imagen convertida
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-            // Eliminar los metadatos de la imagen
             BufferedImage imageWithoutMetadata = removeMetadata(originalImage);
-
-            // Escribir la imagen sin metadatos como JPG en el ByteArrayOutputStream
             ImageIO.write(imageWithoutMetadata, "jpg", outputStream);
 
-            // Guardar la imagen sin metadatos como JPG
-            String newFileName = dni + ".jpg"; // Nombre del archivo basado en el DNI
-            Path uploadPath = Paths.get("files/uploads"); // Ruta donde guardar la imagen
+            String newFileName = dni + ".jpg";
+            Path uploadPath = Paths.get("files/uploads");
             Files.write(uploadPath.resolve(newFileName), outputStream.toByteArray());
 
             if (this.profileImageRepository.findById(userId).isEmpty())
@@ -68,7 +59,6 @@ public class ImageService {
     }
 
     private BufferedImage removeMetadata(BufferedImage originalImage) {
-        // Crear una nueva imagen sin metadatos
         BufferedImage imageWithoutMetadata = new BufferedImage(
                 originalImage.getWidth(), originalImage.getHeight(), BufferedImage.TYPE_INT_RGB);
         imageWithoutMetadata.createGraphics().drawImage(originalImage, 0, 0, null);
