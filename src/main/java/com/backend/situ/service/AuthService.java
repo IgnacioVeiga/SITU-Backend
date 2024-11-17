@@ -3,6 +3,7 @@ package com.backend.situ.service;
 import com.backend.situ.entity.Company;
 import com.backend.situ.entity.User;
 import com.backend.situ.entity.UserCredentials;
+import com.backend.situ.enums.AuditAction;
 import com.backend.situ.event.AuditEvent;
 import com.backend.situ.model.ChangePasswordDTO;
 import com.backend.situ.model.LoginDTO;
@@ -56,7 +57,7 @@ public class AuthService {
         addAuthCookie(response, token);
 
         String details = "New login by user: " + userCred.getUsername();
-        AuditEvent auditEvent = new AuditEvent(this, "LOGIN_USER", userCred.getUsername(), details);
+        AuditEvent auditEvent = new AuditEvent(this, AuditAction.LOGIN, userCred.getUsername(), details);
         eventPublisher.publishEvent(auditEvent);
 
         return this.getSessionData(userCred);
@@ -90,7 +91,7 @@ public class AuthService {
         }
 
         String details = "Signup by user: " + newUser.getUsername();
-        AuditEvent auditEvent = new AuditEvent(this, "SIGNUP_USER", newUser.getUsername(), details);
+        AuditEvent auditEvent = new AuditEvent(this, AuditAction.SIGNUP, newUser.getUsername(), details);
         eventPublisher.publishEvent(auditEvent);
 
         // TODO: Nothing definite yet to do with the phone and the notes received from the form.
@@ -112,7 +113,7 @@ public class AuthService {
         this.authRepository.save(user);
 
         String details = "Password changed by user: " + user.getUsername();
-        AuditEvent auditEvent = new AuditEvent(this, "CHANGE_PASSWORD", user.getUsername(), details);
+        AuditEvent auditEvent = new AuditEvent(this, AuditAction.CHANGE_PASSWORD, user.getUsername(), details);
         eventPublisher.publishEvent(auditEvent);
 
         return HttpServletResponse.SC_OK;

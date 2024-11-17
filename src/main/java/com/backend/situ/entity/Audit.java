@@ -1,4 +1,5 @@
 package com.backend.situ.entity;
+import com.backend.situ.enums.AuditAction;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -9,13 +10,16 @@ public class Audit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String action;
+    
+    @Enumerated(EnumType.STRING)
+    private AuditAction action;
+    
     private String username;
     private String details;
     private LocalDateTime date;
 
     public Audit() {}
-    public Audit(String action, String username, String details, LocalDateTime date) {
+    public Audit(AuditAction action, String username, String details, LocalDateTime date) {
         this.action = action;
         this.username = username;
         this.details = details;
@@ -29,11 +33,11 @@ public class Audit {
         this.id = id;
     }
 
-    public String getAction() {
+    public AuditAction getAction() {
         return action;
     }
 
-    public void setAction(String action) {
+    public void setAction(AuditAction action) {
         this.action = action;
     }
 
