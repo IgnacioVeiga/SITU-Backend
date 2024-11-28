@@ -120,7 +120,7 @@ public class AuthController {
         return ResponseEntity.status(statusCode).body(resp);
     }
 
-    @GetMapping("/get-session")
+    @GetMapping("/session")
     public ResponseEntity<SessionDTO> getSession(@CookieValue("authToken") String authToken){
         SessionDTO session = this.authService.getSessionData(authToken);
 
