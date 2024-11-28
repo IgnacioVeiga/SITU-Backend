@@ -23,6 +23,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/api/situ/auth/login",
                         "/api/situ/auth/signup",
+                        "/api/situ/auth/logout",
                         "/api/situ/auth/get-session"
                 );
     }
