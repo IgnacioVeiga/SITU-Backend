@@ -24,7 +24,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/situ/auth/login",
                         "/api/situ/auth/signup",
                         "/api/situ/auth/logout",
-                        "/api/situ/auth/get-session"
+                        "/api/situ/auth/session"
                 );
     }
 
