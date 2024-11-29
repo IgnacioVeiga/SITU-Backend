@@ -3,10 +3,9 @@ package com.backend.situ.controller;
 import com.backend.situ.entity.Company;
 import com.backend.situ.entity.User;
 import com.backend.situ.enums.UserRole;
-import com.backend.situ.model.ChangePasswordDTO;
-import com.backend.situ.model.LoginDTO;
-import com.backend.situ.model.SessionDTO;
-import com.backend.situ.model.SignupDTO;
+import com.backend.situ.exception.BadRequestException;
+import com.backend.situ.exception.UnauthorizedException;
+import com.backend.situ.model.*;
 import com.backend.situ.service.AuthService;
 import com.backend.situ.service.CompanyService;
 import com.backend.situ.service.UserService;
@@ -37,17 +36,17 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<SessionDTO> login(
+    public ResponseEntity<ApiResponse<SessionDTO>> login(
             @RequestBody LoginDTO form,
             HttpServletResponse response
     ) {
         SessionDTO session = this.authService.doLogin(form, response);
 
         if (session == null) {
-            return ResponseEntity.status(401).build();
+            throw new UnauthorizedException("ERRORS.AUTH.INVALID_CREDENTIALS");
         }
-
-        return ResponseEntity.ok(session);
+        // TODO: translate
+        return ResponseEntity.ok(ApiResponse.success(session, "Inicio de sesión exitoso."));
     }
 
     @PostMapping("/logout")
@@ -56,78 +55,53 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
-    // TODO: must use @Transactional?
+    // must use @Transactional?
     @PostMapping("/signup")
-    public ResponseEntity<HashMap<String, String>> signup(@RequestBody SignupDTO form) {
-        Company company;
-        User user;
-        HashMap<String, String> resp = new HashMap<>();
-
-        // Se verifica si no existe la empresa
+    public ResponseEntity<ApiResponse<Void>> signup(@RequestBody SignupDTO form) {
         if (this.companyService.existCompanyName(form.companyName())) {
-            resp.put("message", "La empresa ya está registrada");
-            return ResponseEntity.status(400).body(resp);
+            throw new BadRequestException("ERRORS.AUTH.COMPANY_EXISTS");
         }
-        else {
-            company = new Company(form.companyName());
-        }
-
-        // Se verifica si no existe el usuario
         if (this.userService.existDNI(form.dni())) {
-            resp.put("message", "DNI ya ocupado en una empresa");
-            return ResponseEntity.status(400).body(resp);
-        }
-        else{
-            company = this.companyService.createCompany(company);
-            user = new User(
-                    company,
-                    form.dni(),
-                    form.firstName(),
-                    form.lastName(),
-                    UserRole.ADMIN
-            );
-            user = this.userService.createUser(user);
+            throw new BadRequestException("ERRORS.AUTH.DNI_EXISTS");
         }
 
+        Company company = this.companyService.createCompany(new Company(form.companyName()));
+        User user = this.userService.createUser(new User(
+                company,
+                form.dni(),
+                form.firstName(),
+                form.lastName(),
+                UserRole.ADMIN
+        ));
         this.authService.signup(form, user);
-        resp.put("message", "¡Registro exitoso!");
-        return ResponseEntity.ok(resp);
+        
+        return ResponseEntity.ok(ApiResponse.success(null, "¡Registro exitoso!"));
     }
 
     @PostMapping("/password")
-    public ResponseEntity<HashMap<String, String>> updatePassword(
+    public ResponseEntity<ApiResponse<Void>> updatePassword(
             @RequestBody ChangePasswordDTO form,
             @CookieValue("authToken") String authToken
     ) {
-        HashMap<String, String> resp = new HashMap<>();
-        int statusCode = this.authService.changePassword(authToken, form);
-
-        // TODO: refactor
-        switch (statusCode) {
-            case 200:
-                resp.put("message", "Contraseña modificada");
-                break;
-            case 400:
-                resp.put("message", "Contraseña actual incorrecta");
-                break;
-            case 404:
-                resp.put("message", "Usuario no encontrado");
-                break;
-            default:
-                resp.put("message", "Hubo un error desconocido");
-                break;
-        }
-        return ResponseEntity.status(statusCode).body(resp);
+        int statusCode = authService.changePassword(authToken, form);
+        // TODO: translate
+        return switch (statusCode) {
+            case 200 -> ResponseEntity.ok(ApiResponse.success(null, "Contraseña modificada."));
+            case 400 -> throw new BadRequestException("ERRORS.AUTH.PASSWORD_INCORRECT");
+            case 404 -> throw new BadRequestException("ERRORS.AUTH.USER_NOT_FOUND");
+            default -> throw new RuntimeException("ERRORS.GENERIC");
+        };
     }
 
     @GetMapping("/session")
-    public ResponseEntity<SessionDTO> getSession(@CookieValue("authToken") String authToken){
+    public ResponseEntity<ApiResponse<SessionDTO>> getSession(@CookieValue("authToken") String authToken) {
         SessionDTO session = this.authService.getSessionData(authToken);
 
         if (session == null) {
-            return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED).body(null);
+            // TODO: translate
+            throw new UnauthorizedException("Por favor, inicie sesión.");
         }
 
-        return ResponseEntity.ok(session);
+        return ResponseEntity.ok(ApiResponse.success(session, null));
     }
 }
