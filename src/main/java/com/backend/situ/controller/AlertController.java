@@ -16,12 +16,12 @@ public class AlertController {
         this.alertService = alertService;
     }
 
-    @GetMapping("/list/{pageIndex}/{pageSize}")
+    @GetMapping("/{pageIndex}/{pageSize}")
     public Page<Alert> list(@PathVariable("pageIndex") int pageIndex, @PathVariable("pageSize") int pageSize) {
         return this.alertService.listAlerts(pageIndex, pageSize);
     }
 
-    @PostMapping("/create")
+    @PostMapping()
     public Alert create(@RequestBody Alert alert) {
         return this.alertService.createAlert(alert);
     }
