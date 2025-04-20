@@ -20,13 +20,13 @@ public class ReportController {
         this.reportService = reportService;
     }
 
-    @GetMapping("/list/{pageIndex}/{pageSize}")
+    @GetMapping("/{pageIndex}/{pageSize}")
     public Page<Report> list(@PathVariable("pageIndex") int pageIndex,
                              @PathVariable("pageSize") int pageSize) {
         return this.reportService.listReports(pageIndex, pageSize);
     }
 
-    @GetMapping("/get/{reportId}")
+    @GetMapping("/{reportId}")
     public Report get(@PathVariable("reportId") Long reportId) {
         return this.reportService.getReport(reportId);
     }

@@ -25,37 +25,36 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        // Ignore OPTIONS
-        if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
-            return true; // Allow preflight requests to pass without authentication
-        }
-
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return false;
-        }
-
-        Optional<Cookie> authCookieOpt = Arrays.stream(cookies)
-                .filter(cookie -> "authToken".equals(cookie.getName()))
-                .findFirst();
-
-        if (authCookieOpt.isEmpty()) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return false;
-        }
-
-        String authToken = authCookieOpt.get().getValue();
         try {
+            // Ignore OPTIONS
+            if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
+                return true; // Allow preflight requests to pass without authentication
+            }
+
+            Cookie[] cookies = request.getCookies();
+            if (cookies == null) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return false;
+            }
+
+            Optional<Cookie> authCookieOpt = Arrays.stream(cookies)
+                    .filter(cookie -> "authToken".equals(cookie.getName()))
+                    .findFirst();
+
+            if (authCookieOpt.isEmpty()) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return false;
+            }
+
+            String authToken = authCookieOpt.get().getValue();
             String subject = jwtService.getSubjectFromToken(authToken);
-            if (subject == null || subject.isEmpty() || subject.isBlank()) {
+            if (subject == null || subject.isBlank()) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return false;
             }
 
             return authService.validateAndRenewToken(authToken, response);
         } catch (ExpiredJwtException | MalformedJwtException e) {
-            System.out.println("Exception!\n" + e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
