@@ -1,11 +1,13 @@
+# deprecated: remove or change in a future release.
+
 services:
   postgres:
-    image: postgis/postgis:15-3.3
-    container_name: SITU_DATABASE
+    image: postgis/postgis:17-3.5
+    container_name: SITU_db_container
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: situ
+      POSTGRES_DB: situ_dev
     ports:
       - "5432:5432"
     volumes:
