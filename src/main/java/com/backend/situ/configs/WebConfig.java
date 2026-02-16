@@ -3,6 +3,7 @@ package com.backend.situ.configs;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -10,7 +11,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${cors.allowedOrigins}")
+    @Value("${security.cors.allowed-origins:http://localhost:4200}")
     private String allowedOrigins;
 
     @Autowired
@@ -19,13 +20,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authInterceptor)
-                .addPathPatterns("/api/situ/**")
-                .excludePathPatterns(
-                        "/api/situ/auth/login",
-                        "/api/situ/auth/signup",
-                        "/api/situ/auth/logout",
-                        "/api/situ/auth/session"
-                );
+                .addPathPatterns("/api/situ/**");
     }
 
     @Override
@@ -33,6 +28,8 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/**")
                 .allowedOrigins(allowedOrigins.split(","))
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .exposedHeaders(HttpHeaders.SET_COOKIE)
                 .allowCredentials(true);
         WebMvcConfigurer.super.addCorsMappings(registry);
     }

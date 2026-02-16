@@ -10,6 +10,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,28 +19,45 @@ import java.util.function.Function;
 
 @Service
 public class JWTService {
-    @Value("${jwt.secret}")
-    private String SECRET_KEY;
+    @Value("${security.jwt.secret}")
+    private String secretKey;
 
-    private final long JWT_EXP_TIME = 1000 * 60 * 24; // 24 hs
-    private final long RENEW_THRESHOLD = 1000 * 60 * 15; // 15 min
+    @Value("${security.jwt.expiration-hours:24}")
+    private long expirationHours;
+
+    @Value("${security.jwt.renew-threshold-minutes:15}")
+    private long renewThresholdMinutes;
 
     public String getToken(UserCredentials user) {
         return getToken(new HashMap<>(), user);
     }
 
     private String getToken(Map<String, Object> extraClaims, UserCredentials userCredentials) {
+        long now = System.currentTimeMillis();
+        long expiration = now + Duration.ofHours(Math.max(1L, expirationHours)).toMillis();
+
         return Jwts.builder()
                 .claims(extraClaims)
                 .subject(userCredentials.getUsername())
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + JWT_EXP_TIME))
+                .issuedAt(new Date(now))
+                .expiration(new Date(expiration))
                 .signWith(getKey())
                 .compact();
     }
 
     private SecretKey getKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(secretKey);
+        } catch (IllegalArgumentException ex) {
+            // Permite usar secretos no-base64 en desarrollo local.
+            keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
+        }
+
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException("JWT secret key must be at least 32 bytes long");
+        }
+
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -61,18 +80,22 @@ public class JWTService {
 
     public boolean isTokenNearExpiry(String token) {
         Date expiration = getExpiration(token);
-        return expiration.getTime() - System.currentTimeMillis() <= RENEW_THRESHOLD;
+        long threshold = Duration.ofMinutes(Math.max(1L, renewThresholdMinutes)).toMillis();
+        return expiration.getTime() - System.currentTimeMillis() <= threshold;
     }
 
     public String renewToken(String token) {
         String email = getSubjectFromToken(token);
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+
         UserCredentials userCredentials = new UserCredentials();
         userCredentials.setEmail(email);
         return getToken(userCredentials);
     }
 
-    private Claims extractAllClaims(String token)
-    {
+    private Claims extractAllClaims(String token) {
         return Jwts
                 .parser()
                 .verifyWith(getKey())

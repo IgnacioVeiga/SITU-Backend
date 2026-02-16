@@ -5,27 +5,30 @@ import com.backend.situ.entity.User;
 import com.backend.situ.enums.UserRole;
 import com.backend.situ.exception.BadRequestException;
 import com.backend.situ.exception.UnauthorizedException;
-import com.backend.situ.model.*;
+import com.backend.situ.model.ApiResponse;
+import com.backend.situ.model.ChangePasswordDTO;
+import com.backend.situ.model.LoginDTO;
+import com.backend.situ.model.SessionDTO;
+import com.backend.situ.model.SignupDTO;
 import com.backend.situ.service.AuthService;
 import com.backend.situ.service.CompanyService;
 import com.backend.situ.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/situ/auth")
 public class AuthController {
-    @Autowired
     private final AuthService authService;
-
-    @Autowired
     private final CompanyService companyService;
-
-    @Autowired
     private final UserService userService;
 
     @Autowired
@@ -45,7 +48,7 @@ public class AuthController {
         if (session == null) {
             throw new UnauthorizedException("ERRORS.AUTH.INVALID_CREDENTIALS");
         }
-        // TODO: translate
+
         return ResponseEntity.ok(ApiResponse.success(session, "Inicio de sesión exitoso."));
     }
 
@@ -55,12 +58,13 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
-    // must use @Transactional?
+    @Transactional
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> signup(@RequestBody SignupDTO form) {
         if (this.companyService.existCompanyName(form.companyName())) {
             throw new BadRequestException("ERRORS.AUTH.COMPANY_EXISTS");
         }
+
         if (this.userService.existDNI(form.dni())) {
             throw new BadRequestException("ERRORS.AUTH.DNI_EXISTS");
         }
@@ -73,8 +77,8 @@ public class AuthController {
                 form.lastName(),
                 UserRole.ADMIN
         ));
+
         this.authService.signup(form, user);
-        
         return ResponseEntity.ok(ApiResponse.success(null, "¡Registro exitoso!"));
     }
 
@@ -84,7 +88,7 @@ public class AuthController {
             @CookieValue("authToken") String authToken
     ) {
         int statusCode = authService.changePassword(authToken, form);
-        // TODO: translate
+
         return switch (statusCode) {
             case 200 -> ResponseEntity.ok(ApiResponse.success(null, "Contraseña modificada."));
             case 400 -> throw new BadRequestException("ERRORS.AUTH.PASSWORD_INCORRECT");
@@ -98,8 +102,7 @@ public class AuthController {
         SessionDTO session = this.authService.getSessionData(authToken);
 
         if (session == null) {
-            // TODO: translate
-            throw new UnauthorizedException("Por favor, inicie sesión.");
+            throw new UnauthorizedException("ERRORS.AUTH.INVALID_CREDENTIALS");
         }
 
         return ResponseEntity.ok(ApiResponse.success(session, null));
