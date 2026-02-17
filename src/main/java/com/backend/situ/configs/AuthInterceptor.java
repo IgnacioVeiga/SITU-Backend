@@ -27,6 +27,9 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     private static final String AUTH_COOKIE_NAME = "authToken";
 
+    private static final String API_V1_PREFIX = "/api/v1";
+    private static final String LEGACY_API_PREFIX = "/api/situ";
+
     private static final Set<UserRole> STAFF_ROLES = EnumSet.of(
             UserRole.ADMIN,
             UserRole.SUPERVISOR,
@@ -56,7 +59,12 @@ public class AuthInterceptor implements HandlerInterceptor {
                 return true;
             }
 
-            if (isPublicEndpoint(request)) {
+            String normalizedPath = normalizeApiPath(request.getRequestURI());
+            if (normalizedPath == null) {
+                return true;
+            }
+
+            if (isPublicEndpoint(normalizedPath, request.getMethod())) {
                 return true;
             }
 
@@ -79,7 +87,7 @@ public class AuthInterceptor implements HandlerInterceptor {
                 return writeError(response, HttpServletResponse.SC_UNAUTHORIZED, "ERRORS.AUTH.INVALID_CREDENTIALS");
             }
 
-            if (!isRoleAllowed(request, role)) {
+            if (!isRoleAllowed(normalizedPath, request.getMethod(), role)) {
                 return writeError(response, HttpServletResponse.SC_FORBIDDEN, "ERRORS.AUTH.INSUFFICIENT_PERMISSIONS");
             }
 
@@ -91,17 +99,10 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
     }
 
-    private boolean isPublicEndpoint(HttpServletRequest request) {
-        String uri = request.getRequestURI();
-        String method = request.getMethod();
-
-        if (!uri.startsWith("/api/situ/auth")) {
-            return false;
-        }
-
-        return ("/api/situ/auth/login".equals(uri) && HttpMethod.POST.matches(method))
-                || ("/api/situ/auth/signup".equals(uri) && HttpMethod.POST.matches(method))
-                || ("/api/situ/auth/logout".equals(uri) && HttpMethod.POST.matches(method));
+    private boolean isPublicEndpoint(String path, String method) {
+        return ("/auth/login".equals(path) && HttpMethod.POST.matches(method))
+                || ("/auth/signup".equals(path) && HttpMethod.POST.matches(method))
+                || ("/auth/logout".equals(path) && HttpMethod.POST.matches(method));
     }
 
     private String extractAuthToken(HttpServletRequest request) {
@@ -117,48 +118,62 @@ public class AuthInterceptor implements HandlerInterceptor {
         return authCookieOpt.map(Cookie::getValue).orElse(null);
     }
 
-    private boolean isRoleAllowed(HttpServletRequest request, UserRole role) {
-        String uri = request.getRequestURI();
-        String method = request.getMethod();
-
-        if ("/api/situ/auth/session".equals(uri) && HttpMethod.GET.matches(method)) {
+    private boolean isRoleAllowed(String path, String method, UserRole role) {
+        if ("/auth/session".equals(path) && HttpMethod.GET.matches(method)) {
             return AUTHENTICATED_ROLES.contains(role);
         }
 
-        if ("/api/situ/auth/password".equals(uri) && HttpMethod.POST.matches(method)) {
+        if ("/auth/password".equals(path) && HttpMethod.POST.matches(method)) {
             return AUTHENTICATED_ROLES.contains(role);
         }
 
-        if (uri.startsWith("/api/situ/users")) {
-            if (HttpMethod.GET.matches(method)) {
-                return MANAGEMENT_ROLES.contains(role);
-            }
+        if (path.startsWith("/users")) {
             return MANAGEMENT_ROLES.contains(role);
         }
 
-        if (uri.startsWith("/api/situ/companies")) {
+        if (path.startsWith("/companies")) {
             return MANAGEMENT_ROLES.contains(role);
         }
 
-        if (uri.startsWith("/api/situ/lines")
-                || uri.startsWith("/api/situ/routes")
-                || uri.startsWith("/api/situ/stops")) {
+        if (path.startsWith("/lines")
+                || path.startsWith("/routes")
+                || path.startsWith("/stops")) {
             if (HttpMethod.GET.matches(method)) {
                 return STAFF_ROLES.contains(role);
             }
             return MANAGEMENT_ROLES.contains(role);
         }
 
-        if (uri.startsWith("/api/situ/reports") || uri.startsWith("/api/situ/alerts")) {
+        if (path.startsWith("/reports") || path.startsWith("/alerts")) {
             return STAFF_ROLES.contains(role);
         }
 
-        if (uri.startsWith("/api/situ/images")) {
+        if (path.startsWith("/images")) {
             return STAFF_ROLES.contains(role);
         }
 
         // Deny by default to avoid exposing new endpoints accidentally.
         return false;
+    }
+
+    private String normalizeApiPath(String uri) {
+        if (uri.startsWith(API_V1_PREFIX)) {
+            return normalizeSuffix(uri.substring(API_V1_PREFIX.length()));
+        }
+
+        if (uri.startsWith(LEGACY_API_PREFIX)) {
+            return normalizeSuffix(uri.substring(LEGACY_API_PREFIX.length()));
+        }
+
+        return null;
+    }
+
+    private String normalizeSuffix(String suffix) {
+        if (suffix == null || suffix.isBlank()) {
+            return "/";
+        }
+
+        return suffix.startsWith("/") ? suffix : "/" + suffix;
     }
 
     private boolean writeError(HttpServletResponse response, int status, String messageKey) throws IOException {

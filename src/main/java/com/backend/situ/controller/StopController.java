@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/situ/stops")
+@RequestMapping({"/api/v1/stops", "/api/situ/stops"})
 public class StopController {
 
     @Autowired

@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/situ/lines")
+@RequestMapping({"/api/v1/lines", "/api/situ/lines"})
 public class LineController {
 
     @Autowired
