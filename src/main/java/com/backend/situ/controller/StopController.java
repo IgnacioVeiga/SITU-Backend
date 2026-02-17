@@ -1,9 +1,9 @@
 package com.backend.situ.controller;
 
 import com.backend.situ.entity.Stop;
+import com.backend.situ.model.ApiResponse;
 import com.backend.situ.model.StopDTO;
 import com.backend.situ.service.StopService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,32 +13,36 @@ import java.util.List;
 @RequestMapping("/api/v1/stops")
 public class StopController {
 
-    @Autowired
-    private StopService stopService;
+    private final StopService stopService;
+
+    public StopController(StopService stopService) {
+        this.stopService = stopService;
+    }
 
     @GetMapping
-    public List<Stop> getAllStops() {
-        return stopService.getAllStops();
+    public ResponseEntity<ApiResponse<List<Stop>>> getAllStops() {
+        return ResponseEntity.ok(ApiResponse.success(stopService.getAllStops(), null));
     }
 
     @GetMapping("/route/{routeId}")
-    public ResponseEntity<List<StopDTO>> getStopsByRoute(@PathVariable Long routeId) {
+    public ResponseEntity<ApiResponse<List<StopDTO>>> getStopsByRoute(@PathVariable Long routeId) {
         List<StopDTO> stops = stopService.getStopsByRoute(routeId);
-        return ResponseEntity.ok(stops);
+        return ResponseEntity.ok(ApiResponse.success(stops, null));
     }
 
     @PostMapping
-    public Stop createStop(@RequestBody Stop stop) {
-        return stopService.createStop(stop);
+    public ResponseEntity<ApiResponse<Stop>> createStop(@RequestBody Stop stop) {
+        return ResponseEntity.ok(ApiResponse.success(stopService.createStop(stop), "Parada creada."));
     }
 
     @PutMapping("/{id}")
-    public Stop updateStop(@PathVariable Long id, @RequestBody Stop stopDetails) {
-        return stopService.updateStop(id, stopDetails);
+    public ResponseEntity<ApiResponse<Stop>> updateStop(@PathVariable Long id, @RequestBody Stop stopDetails) {
+        return ResponseEntity.ok(ApiResponse.success(stopService.updateStop(id, stopDetails), "Parada actualizada."));
     }
 
     @DeleteMapping("/{id}")
-    public void deleteStop(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteStop(@PathVariable Long id) {
         stopService.deleteStop(id);
+        return ResponseEntity.ok(ApiResponse.success(null, "Parada eliminada."));
     }
 }

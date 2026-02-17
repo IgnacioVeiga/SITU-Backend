@@ -2,6 +2,15 @@
 
 Base path: `/api/v1`
 
+All JSON endpoints use a common envelope:
+
+```json
+{
+  "message": "optional-message-or-key",
+  "data": {}
+}
+```
+
 ## Auth
 - `POST /auth/login`
 - `POST /auth/logout`
@@ -30,6 +39,8 @@ Legacy compatibility:
 - `GET /users/{pageIndex}/{pageSize}/{companyId}` (management)
 - `GET /users/{id}` (management)
 - `POST /users` (management)
+- `PUT /users/{id}` (management)
+- `DELETE /users/{id}` (management)
 
 ## Transit entities
 - `GET /lines` (authenticated user)
@@ -43,4 +54,5 @@ Write operations on lines/routes/stops are restricted to management roles.
 - `POST /images/upload/user-profile`
 - `GET /images/user-profile/{filename}`
 
-Image endpoints are currently staff-only.
+Image upload endpoint is staff-only.
+Image retrieval endpoint returns the binary resource directly (not wrapped in `ApiResponse`).

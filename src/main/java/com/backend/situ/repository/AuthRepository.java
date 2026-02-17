@@ -10,5 +10,7 @@ import java.util.Optional;
 public interface AuthRepository extends JpaRepository<UserCredentials, Long> {
     Optional<UserCredentials> findByEmail(String email);
 
-    UserCredentials findByUserId(Long userId);
+    Optional<UserCredentials> findByUserId(Long userId);
+
+    void deleteByUserId(Long userId);
 }

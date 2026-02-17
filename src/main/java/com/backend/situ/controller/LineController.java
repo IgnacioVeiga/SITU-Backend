@@ -1,8 +1,9 @@
 package com.backend.situ.controller;
 
 import com.backend.situ.entity.Line;
+import com.backend.situ.model.ApiResponse;
 import com.backend.situ.service.LineService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,31 +12,35 @@ import java.util.List;
 @RequestMapping("/api/v1/lines")
 public class LineController {
 
-    @Autowired
-    private LineService lineService;
+    private final LineService lineService;
+
+    public LineController(LineService lineService) {
+        this.lineService = lineService;
+    }
 
     @GetMapping
-    public List<Line> getAllLines() {
-        return lineService.getAllLines();
+    public ResponseEntity<ApiResponse<List<Line>>> getAllLines() {
+        return ResponseEntity.ok(ApiResponse.success(lineService.getAllLines(), null));
     }
 
     @GetMapping("/{id}")
-    public Line getLineById(@PathVariable Long id) {
-        return lineService.getLineById(id);
+    public ResponseEntity<ApiResponse<Line>> getLineById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(lineService.getLineById(id), null));
     }
 
     @PostMapping
-    public Line createLine(@RequestBody Line line) {
-        return lineService.createLine(line);
+    public ResponseEntity<ApiResponse<Line>> createLine(@RequestBody Line line) {
+        return ResponseEntity.ok(ApiResponse.success(lineService.createLine(line), "Línea creada."));
     }
 
     @PutMapping("/{id}")
-    public Line updateLine(@PathVariable Long id, @RequestBody Line lineDetails) {
-        return lineService.updateLine(id, lineDetails);
+    public ResponseEntity<ApiResponse<Line>> updateLine(@PathVariable Long id, @RequestBody Line lineDetails) {
+        return ResponseEntity.ok(ApiResponse.success(lineService.updateLine(id, lineDetails), "Línea actualizada."));
     }
 
     @DeleteMapping("/{id}")
-    public void deleteLine(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteLine(@PathVariable Long id) {
         lineService.deleteLine(id);
+        return ResponseEntity.ok(ApiResponse.success(null, "Línea eliminada."));
     }
 }

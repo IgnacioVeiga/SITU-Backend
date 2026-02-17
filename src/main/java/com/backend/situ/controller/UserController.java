@@ -1,47 +1,56 @@
 package com.backend.situ.controller;
 
 import com.backend.situ.entity.User;
+import com.backend.situ.exception.BadRequestException;
+import com.backend.situ.model.ApiResponse;
 import com.backend.situ.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/users")
 public class UserController {
     private final UserService userService;
 
-    @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
     @GetMapping("/{pageIndex}/{pageSize}/{companyId}")
-    public Page<User> list(@PathVariable("pageIndex") Integer pageIndex,
-                           @PathVariable("pageSize") Integer pageSize,
-                           @PathVariable("companyId") Long companyId) {
-        return this.userService.listUsers(pageIndex, pageSize, companyId);
+    public ResponseEntity<ApiResponse<Page<User>>> list(
+            @PathVariable("pageIndex") Integer pageIndex,
+            @PathVariable("pageSize") Integer pageSize,
+            @PathVariable("companyId") Long companyId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(this.userService.listUsers(pageIndex, pageSize, companyId), null));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> get(@PathVariable("id") Long id) {
+    public ResponseEntity<ApiResponse<User>> get(@PathVariable("id") Long id) {
         User user = this.userService.getUser(id);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            throw new BadRequestException("ERRORS.USER.NOT_FOUND");
         }
-        return ResponseEntity.ok(user);
+
+        return ResponseEntity.ok(ApiResponse.success(user, null));
     }
 
-    @PostMapping()
-    public ResponseEntity<Long> create(@RequestBody User user) {
+    @PostMapping
+    public ResponseEntity<ApiResponse<Long>> create(@RequestBody User user) {
         User userCreated = this.userService.createUser(user);
-        if (userCreated == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
-        return ResponseEntity.ok(userCreated.getId());
+        return ResponseEntity.ok(ApiResponse.success(userCreated.getId(), "Usuario creado."));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<User>> update(@PathVariable("id") Long id, @RequestBody User user) {
+        User updated = this.userService.updateUser(id, user);
+        return ResponseEntity.ok(ApiResponse.success(updated, "Usuario actualizado."));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable("id") Long id) {
+        this.userService.deleteUser(id);
+        return ResponseEntity.ok(ApiResponse.success(null, "Usuario eliminado."));
     }
 }
