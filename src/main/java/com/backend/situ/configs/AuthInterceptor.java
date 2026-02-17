@@ -26,9 +26,7 @@ import java.util.Set;
 public class AuthInterceptor implements HandlerInterceptor {
 
     private static final String AUTH_COOKIE_NAME = "authToken";
-
-    private static final String API_V1_PREFIX = "/api/v1";
-    private static final String LEGACY_API_PREFIX = "/api/situ";
+    private static final String API_PREFIX = "/api/v1";
 
     private static final Set<UserRole> STAFF_ROLES = EnumSet.of(
             UserRole.ADMIN,
@@ -157,19 +155,12 @@ public class AuthInterceptor implements HandlerInterceptor {
     }
 
     private String normalizeApiPath(String uri) {
-        if (uri.startsWith(API_V1_PREFIX)) {
-            return normalizeSuffix(uri.substring(API_V1_PREFIX.length()));
+        if (!uri.startsWith(API_PREFIX)) {
+            return null;
         }
 
-        if (uri.startsWith(LEGACY_API_PREFIX)) {
-            return normalizeSuffix(uri.substring(LEGACY_API_PREFIX.length()));
-        }
-
-        return null;
-    }
-
-    private String normalizeSuffix(String suffix) {
-        if (suffix == null || suffix.isBlank()) {
+        String suffix = uri.substring(API_PREFIX.length());
+        if (suffix.isBlank()) {
             return "/";
         }
 
