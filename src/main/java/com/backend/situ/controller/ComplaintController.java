@@ -29,6 +29,16 @@ public class ComplaintController {
         return ResponseEntity.ok(ApiResponse.success(complaints, null));
     }
 
+    @GetMapping("/mine/{pageIndex}/{pageSize}")
+    public ResponseEntity<ApiResponse<Page<ComplaintResponseDTO>>> listMine(
+            @PathVariable("pageIndex") int pageIndex,
+            @PathVariable("pageSize") int pageSize,
+            @RequestAttribute("auth.subject") String subjectEmail
+    ) {
+        Page<ComplaintResponseDTO> complaints = complaintService.listMyComplaints(subjectEmail, pageIndex, pageSize);
+        return ResponseEntity.ok(ApiResponse.success(complaints, null));
+    }
+
     @GetMapping("/{complaintId}")
     public ResponseEntity<ApiResponse<ComplaintResponseDTO>> get(@PathVariable("complaintId") Long complaintId) {
         ComplaintResponseDTO complaint = complaintService.getComplaint(complaintId);

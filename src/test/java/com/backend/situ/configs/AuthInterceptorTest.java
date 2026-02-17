@@ -162,4 +162,19 @@ class AuthInterceptorTest {
         assertEquals(403, response.getStatus());
         assertTrue(response.getContentAsString().contains("ERRORS.AUTH.INSUFFICIENT_PERMISSIONS"));
     }
+
+    @Test
+    void shouldAllowPassengerToReadOwnComplaints() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/complaints/mine/0/10");
+        request.setCookies(new Cookie("authToken", "valid-token"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        when(jwtService.getSubjectFromToken("valid-token")).thenReturn("passenger@company.com");
+        when(authService.validateAndRenewToken(eq("valid-token"), any())).thenReturn(true);
+        when(authService.getRoleFromToken("valid-token")).thenReturn(UserRole.PASSENGER);
+
+        boolean allowed = authInterceptor.preHandle(request, response, new Object());
+
+        assertTrue(allowed);
+    }
 }

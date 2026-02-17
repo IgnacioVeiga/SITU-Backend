@@ -12,5 +12,7 @@ import java.util.Optional;
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     Page<Complaint> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
+    Page<Complaint> findByReporterUserIdOrderByCreatedAtDesc(Long reporterUserId, Pageable pageable);
+
     Optional<Complaint> findByTrackingToken(String trackingToken);
 }

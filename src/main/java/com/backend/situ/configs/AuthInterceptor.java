@@ -151,6 +151,11 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         if (path.startsWith("/complaints") || path.startsWith("/reports")) {
+            if ((path.startsWith("/complaints/mine/") || path.startsWith("/reports/mine/"))
+                    && HttpMethod.GET.matches(method)) {
+                return AUTHENTICATED_ROLES.contains(role);
+            }
+
             if (HttpMethod.POST.matches(method)) {
                 return AUTHENTICATED_ROLES.contains(role);
             }

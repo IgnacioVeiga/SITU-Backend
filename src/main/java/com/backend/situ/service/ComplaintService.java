@@ -83,6 +83,14 @@ public class ComplaintService {
         return complaintRepository.findAllByOrderByCreatedAtDesc(pageable).map(this::toResponseDTO);
     }
 
+    public Page<ComplaintResponseDTO> listMyComplaints(String subjectEmail, int pageIndex, int pageSize) {
+        User reporter = resolveUserFromSubject(subjectEmail);
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
+        return complaintRepository
+                .findByReporterUserIdOrderByCreatedAtDesc(reporter.getId(), pageable)
+                .map(this::toResponseDTO);
+    }
+
     public ComplaintResponseDTO getComplaint(Long complaintId) {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new BadRequestException("ERRORS.COMPLAINT.NOT_FOUND"));
