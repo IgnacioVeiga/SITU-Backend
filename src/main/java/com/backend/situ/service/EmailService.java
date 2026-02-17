@@ -1,5 +1,6 @@
 package com.backend.situ.service;
 
+import com.backend.situ.enums.ComplaintState;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,5 +42,16 @@ public class EmailService {
                 + "<a href='" + verificationLink + "'>Verificar correo</a></p>";
 
         sendHtmlEmail(newEmail, subject, htmlContent);
+    }
+
+    public void sendComplaintStatusChangedEmail(String destinationEmail, String trackingToken, ComplaintState state)
+            throws MessagingException {
+        String subject = "Actualización de tu denuncia";
+        String htmlContent = "<h1>Tu denuncia cambió de estado</h1>"
+                + "<p><b>Estado:</b> " + state + "</p>"
+                + "<p><b>Código de seguimiento:</b> " + trackingToken + "</p>"
+                + "<p>Podés usar este código para revisar el estado desde la app.</p>";
+
+        sendHtmlEmail(destinationEmail, subject, htmlContent);
     }
 }

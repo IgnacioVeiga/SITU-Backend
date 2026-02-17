@@ -35,6 +35,12 @@ public class AuthInterceptor implements HandlerInterceptor {
             UserRole.DRIVER
     );
 
+    private static final Set<UserRole> COMPANY_STAFF_ROLES = EnumSet.of(
+            UserRole.ADMIN,
+            UserRole.SUPERVISOR,
+            UserRole.EMPLOYEE
+    );
+
     private static final Set<UserRole> MANAGEMENT_ROLES = EnumSet.of(
             UserRole.ADMIN,
             UserRole.SUPERVISOR
@@ -100,7 +106,9 @@ public class AuthInterceptor implements HandlerInterceptor {
     private boolean isPublicEndpoint(String path, String method) {
         return ("/auth/login".equals(path) && HttpMethod.POST.matches(method))
                 || ("/auth/signup".equals(path) && HttpMethod.POST.matches(method))
-                || ("/auth/logout".equals(path) && HttpMethod.POST.matches(method));
+                || ("/auth/logout".equals(path) && HttpMethod.POST.matches(method))
+                || (path.startsWith("/complaints/tracking/") && HttpMethod.GET.matches(method))
+                || (path.startsWith("/reports/tracking/") && HttpMethod.GET.matches(method));
     }
 
     private String extractAuthToken(HttpServletRequest request) {
@@ -137,13 +145,33 @@ public class AuthInterceptor implements HandlerInterceptor {
                 || path.startsWith("/routes")
                 || path.startsWith("/stops")) {
             if (HttpMethod.GET.matches(method)) {
-                return STAFF_ROLES.contains(role);
+                return AUTHENTICATED_ROLES.contains(role);
             }
             return MANAGEMENT_ROLES.contains(role);
         }
 
-        if (path.startsWith("/reports") || path.startsWith("/alerts")) {
-            return STAFF_ROLES.contains(role);
+        if (path.startsWith("/complaints") || path.startsWith("/reports")) {
+            if (HttpMethod.POST.matches(method)) {
+                return AUTHENTICATED_ROLES.contains(role);
+            }
+
+            if (HttpMethod.GET.matches(method) || HttpMethod.PATCH.matches(method)) {
+                return COMPANY_STAFF_ROLES.contains(role);
+            }
+
+            return false;
+        }
+
+        if (path.startsWith("/alerts")) {
+            if (HttpMethod.GET.matches(method) || HttpMethod.POST.matches(method)) {
+                return AUTHENTICATED_ROLES.contains(role);
+            }
+
+            if (HttpMethod.PATCH.matches(method) || HttpMethod.PUT.matches(method) || HttpMethod.DELETE.matches(method)) {
+                return COMPANY_STAFF_ROLES.contains(role);
+            }
+
+            return false;
         }
 
         if (path.startsWith("/images")) {

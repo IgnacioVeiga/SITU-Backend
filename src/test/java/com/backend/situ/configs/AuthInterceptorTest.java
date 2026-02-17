@@ -119,4 +119,47 @@ class AuthInterceptorTest {
         assertTrue(allowed);
         verifyNoInteractions(jwtService, authService);
     }
+
+    @Test
+    void shouldAllowPublicComplaintTrackingEndpointWithoutAuthentication() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/complaints/tracking/ABC123");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        boolean allowed = authInterceptor.preHandle(request, response, new Object());
+
+        assertTrue(allowed);
+        verifyNoInteractions(jwtService, authService);
+    }
+
+    @Test
+    void shouldAllowPassengerToCreateAlert() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/alerts");
+        request.setCookies(new Cookie("authToken", "valid-token"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        when(jwtService.getSubjectFromToken("valid-token")).thenReturn("passenger@company.com");
+        when(authService.validateAndRenewToken(eq("valid-token"), any())).thenReturn(true);
+        when(authService.getRoleFromToken("valid-token")).thenReturn(UserRole.PASSENGER);
+
+        boolean allowed = authInterceptor.preHandle(request, response, new Object());
+
+        assertTrue(allowed);
+    }
+
+    @Test
+    void shouldDenyPassengerWhenUpdatingAlert() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("PATCH", "/api/v1/alerts/1");
+        request.setCookies(new Cookie("authToken", "valid-token"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        when(jwtService.getSubjectFromToken("valid-token")).thenReturn("passenger@company.com");
+        when(authService.validateAndRenewToken(eq("valid-token"), any())).thenReturn(true);
+        when(authService.getRoleFromToken("valid-token")).thenReturn(UserRole.PASSENGER);
+
+        boolean allowed = authInterceptor.preHandle(request, response, new Object());
+
+        assertFalse(allowed);
+        assertEquals(403, response.getStatus());
+        assertTrue(response.getContentAsString().contains("ERRORS.AUTH.INSUFFICIENT_PERMISSIONS"));
+    }
 }

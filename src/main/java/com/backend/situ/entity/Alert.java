@@ -25,6 +25,15 @@ public class Alert {
     @Column(name = "alert_date")
     private Timestamp alertDate;
 
+    @Column(name = "starts_at")
+    private Timestamp startsAt;
+
+    @Column(name = "ends_at")
+    private Timestamp endsAt;
+
+    @Column(name = "is_active")
+    private Boolean active;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "priority")
     private AlertPriority priority;
@@ -72,6 +81,30 @@ public class Alert {
         this.alertDate = alertDate;
     }
 
+    public Timestamp getStartsAt() {
+        return startsAt;
+    }
+
+    public void setStartsAt(Timestamp startsAt) {
+        this.startsAt = startsAt;
+    }
+
+    public Timestamp getEndsAt() {
+        return endsAt;
+    }
+
+    public void setEndsAt(Timestamp endsAt) {
+        this.endsAt = endsAt;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
+
     public AlertPriority getPriority() {
         return priority;
     }
@@ -91,12 +124,26 @@ public class Alert {
     public Alert() {
     }
 
-    public Alert(Long id, User user, String title, String description, Timestamp alertDate, AlertPriority priority, String location) {
+    public Alert(
+            Long id,
+            User user,
+            String title,
+            String description,
+            Timestamp alertDate,
+            Timestamp startsAt,
+            Timestamp endsAt,
+            Boolean active,
+            AlertPriority priority,
+            String location
+    ) {
         this.id = id;
         this.user = user;
         this.title = title;
         this.description = description;
         this.alertDate = alertDate;
+        this.startsAt = startsAt;
+        this.endsAt = endsAt;
+        this.active = active;
         this.priority = priority;
         this.location = location;
     }
