@@ -1,57 +1,124 @@
 package com.backend.situ.service;
 
+import com.backend.situ.entity.Line;
 import com.backend.situ.entity.Route;
+import com.backend.situ.entity.User;
+import com.backend.situ.entity.UserCredentials;
+import com.backend.situ.exception.BadRequestException;
+import com.backend.situ.exception.NotFoundException;
 import com.backend.situ.model.RouteDTO;
+import com.backend.situ.model.RouteUpsertDTO;
+import com.backend.situ.repository.AuthRepository;
+import com.backend.situ.repository.LineRepository;
 import com.backend.situ.repository.RouteRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class RouteService {
 
-    @Autowired
-    private RouteRepository routeRepository;
+    private final RouteRepository routeRepository;
+    private final LineRepository lineRepository;
+    private final AuthRepository authRepository;
 
-    public List<RouteDTO> getRoutesByLine(Long lineId) {
-        List<Object[]> results = routeRepository.findRoutesByLine(lineId);
+    public RouteService(RouteRepository routeRepository, LineRepository lineRepository, AuthRepository authRepository) {
+        this.routeRepository = routeRepository;
+        this.lineRepository = lineRepository;
+        this.authRepository = authRepository;
+    }
 
-        List<RouteDTO> routes = new ArrayList<>();
-        for (Object[] result : results) {
-            Long id = ((Number) result[0]).longValue();
-            String name = (String) result[1];
-            String coordinates = (String) result[2];
+    @Transactional(readOnly = true)
+    public List<RouteDTO> getRoutesByLine(Long lineId, String subjectEmail) {
+        Long companyId = resolveUserFromSubject(subjectEmail).getCompany().getId();
+        if (lineRepository.findByIdAndCompanyId(lineId, companyId).isEmpty()) {
+            throw new NotFoundException("ERRORS.LINE.NOT_FOUND");
+        }
+        return routeRepository.findByLineIdAndLineCompanyId(lineId, companyId).stream()
+                .map(this::toRouteDTO)
+                .collect(Collectors.toList());
+    }
 
-            routes.add(new RouteDTO(id, name, coordinates));
+    @Transactional(readOnly = true)
+    public RouteDTO getRouteById(Long id, String subjectEmail) {
+        Long companyId = resolveUserFromSubject(subjectEmail).getCompany().getId();
+        Route route = routeRepository.findByIdAndLineCompanyId(id, companyId)
+                .orElseThrow(() -> new NotFoundException("ERRORS.ROUTE.NOT_FOUND"));
+        return toRouteDTO(route);
+    }
+
+    @Transactional
+    public RouteDTO createRoute(RouteUpsertDTO request, String subjectEmail) {
+        if (request == null || request.lineId() == null) {
+            throw new BadRequestException("ERRORS.ROUTE.LINE_REQUIRED");
+        }
+        if (request.name() == null || request.name().isBlank()) {
+            throw new BadRequestException("ERRORS.ROUTE.NAME_REQUIRED");
+        }
+        if (request.coordinates() == null || request.coordinates().isBlank()) {
+            throw new BadRequestException("ERRORS.ROUTE.COORDINATES_REQUIRED");
         }
 
-        return routes;
+        Long companyId = resolveUserFromSubject(subjectEmail).getCompany().getId();
+        Line line = lineRepository.findByIdAndCompanyId(request.lineId(), companyId)
+                .orElseThrow(() -> new NotFoundException("ERRORS.LINE.NOT_FOUND"));
+
+        Route route = new Route();
+        route.setLine(line);
+        route.setName(request.name().trim());
+        route.setCoordinates(request.coordinates().trim());
+        return toRouteDTO(routeRepository.save(route));
     }
 
-    public Route getRouteById(Long id) {
-        return routeRepository.findById(id).orElse(null);
-    }
+    @Transactional
+    public RouteDTO updateRoute(Long id, RouteUpsertDTO request, String subjectEmail) {
+        Long companyId = resolveUserFromSubject(subjectEmail).getCompany().getId();
+        Route route = routeRepository.findByIdAndLineCompanyId(id, companyId)
+                .orElseThrow(() -> new NotFoundException("ERRORS.ROUTE.NOT_FOUND"));
 
-    public Route createRoute(Route route) {
-        return routeRepository.save(route);
-    }
-
-    public Route updateRoute(Long id, Route routeDetails) {
-        Optional<Route> routeOptional = routeRepository.findById(id);
-        if (routeOptional.isPresent()) {
-            Route route = routeOptional.get();
-            route.setName(routeDetails.getName());
-            route.setCoordinates(routeDetails.getCoordinates());
-            route.setLine(routeDetails.getLine());
-            return routeRepository.save(route);
+        if (request == null) {
+            throw new BadRequestException("ERRORS.ROUTE.INVALID_REQUEST");
         }
-        return null;
+
+        if (request.lineId() != null) {
+            Line line = lineRepository.findByIdAndCompanyId(request.lineId(), companyId)
+                    .orElseThrow(() -> new NotFoundException("ERRORS.LINE.NOT_FOUND"));
+            route.setLine(line);
+        }
+        if (request.name() != null && !request.name().isBlank()) {
+            route.setName(request.name().trim());
+        }
+        if (request.coordinates() != null && !request.coordinates().isBlank()) {
+            route.setCoordinates(request.coordinates().trim());
+        }
+
+        return toRouteDTO(routeRepository.save(route));
     }
 
-    public void deleteRoute(Long id) {
-        routeRepository.deleteById(id);
+    @Transactional
+    public void deleteRoute(Long id, String subjectEmail) {
+        Long companyId = resolveUserFromSubject(subjectEmail).getCompany().getId();
+        Route route = routeRepository.findByIdAndLineCompanyId(id, companyId)
+                .orElseThrow(() -> new NotFoundException("ERRORS.ROUTE.NOT_FOUND"));
+        routeRepository.delete(route);
+    }
+
+    private User resolveUserFromSubject(String subjectEmail) {
+        UserCredentials credentials = authRepository.findByEmail(subjectEmail)
+                .orElseThrow(() -> new BadRequestException("ERRORS.AUTH.USER_NOT_FOUND"));
+        if (credentials.getUser() == null) {
+            throw new BadRequestException("ERRORS.AUTH.USER_NOT_FOUND");
+        }
+        return credentials.getUser();
+    }
+
+    private RouteDTO toRouteDTO(Route route) {
+        return new RouteDTO(
+                route.getId(),
+                route.getName(),
+                route.getCoordinates()
+        );
     }
 }

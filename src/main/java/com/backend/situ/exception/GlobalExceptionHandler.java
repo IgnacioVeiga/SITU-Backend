@@ -25,6 +25,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.failure(ex.getMessage()));
     }
 
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleNotFoundException(NotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.failure(ex.getMessage()));
+    }
+
     @ExceptionHandler(MissingRequestCookieException.class)
     public ResponseEntity<ApiResponse<Object>> handleMissingRequestCookieException(MissingRequestCookieException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

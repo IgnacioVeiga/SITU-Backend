@@ -104,11 +104,10 @@ public class AuthInterceptor implements HandlerInterceptor {
     }
 
     private boolean isPublicEndpoint(String path, String method) {
-        return ("/auth/login".equals(path) && HttpMethod.POST.matches(method))
+                return ("/auth/login".equals(path) && HttpMethod.POST.matches(method))
                 || ("/auth/signup".equals(path) && HttpMethod.POST.matches(method))
                 || ("/auth/logout".equals(path) && HttpMethod.POST.matches(method))
-                || (path.startsWith("/complaints/tracking/") && HttpMethod.GET.matches(method))
-                || (path.startsWith("/reports/tracking/") && HttpMethod.GET.matches(method));
+                || (path.startsWith("/complaints/tracking/") && HttpMethod.GET.matches(method));
     }
 
     private String extractAuthToken(HttpServletRequest request) {
@@ -150,9 +149,8 @@ public class AuthInterceptor implements HandlerInterceptor {
             return MANAGEMENT_ROLES.contains(role);
         }
 
-        if (path.startsWith("/complaints") || path.startsWith("/reports")) {
-            if ((path.startsWith("/complaints/mine/") || path.startsWith("/reports/mine/"))
-                    && HttpMethod.GET.matches(method)) {
+        if (path.startsWith("/complaints")) {
+            if (path.startsWith("/complaints/mine/") && HttpMethod.GET.matches(method)) {
                 return AUTHENTICATED_ROLES.contains(role);
             }
 

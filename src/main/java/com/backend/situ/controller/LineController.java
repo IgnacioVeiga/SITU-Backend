@@ -1,7 +1,8 @@
 package com.backend.situ.controller;
 
-import com.backend.situ.entity.Line;
 import com.backend.situ.model.ApiResponse;
+import com.backend.situ.model.LineResponseDTO;
+import com.backend.situ.model.LineUpsertDTO;
 import com.backend.situ.service.LineService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,28 +20,43 @@ public class LineController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Line>>> getAllLines() {
-        return ResponseEntity.ok(ApiResponse.success(lineService.getAllLines(), null));
+    public ResponseEntity<ApiResponse<List<LineResponseDTO>>> getAllLines(
+            @RequestAttribute("auth.subject") String subjectEmail
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(lineService.getAllLines(subjectEmail), null));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Line>> getLineById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(lineService.getLineById(id), null));
+    public ResponseEntity<ApiResponse<LineResponseDTO>> getLineById(
+            @PathVariable Long id,
+            @RequestAttribute("auth.subject") String subjectEmail
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(lineService.getLineById(id, subjectEmail), null));
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Line>> createLine(@RequestBody Line line) {
-        return ResponseEntity.ok(ApiResponse.success(lineService.createLine(line), "Línea creada."));
+    public ResponseEntity<ApiResponse<LineResponseDTO>> createLine(
+            @RequestBody LineUpsertDTO request,
+            @RequestAttribute("auth.subject") String subjectEmail
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(lineService.createLine(request, subjectEmail), "Línea creada."));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<Line>> updateLine(@PathVariable Long id, @RequestBody Line lineDetails) {
-        return ResponseEntity.ok(ApiResponse.success(lineService.updateLine(id, lineDetails), "Línea actualizada."));
+    public ResponseEntity<ApiResponse<LineResponseDTO>> updateLine(
+            @PathVariable Long id,
+            @RequestBody LineUpsertDTO request,
+            @RequestAttribute("auth.subject") String subjectEmail
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(lineService.updateLine(id, request, subjectEmail), "Línea actualizada."));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteLine(@PathVariable Long id) {
-        lineService.deleteLine(id);
+    public ResponseEntity<ApiResponse<Void>> deleteLine(
+            @PathVariable Long id,
+            @RequestAttribute("auth.subject") String subjectEmail
+    ) {
+        lineService.deleteLine(id, subjectEmail);
         return ResponseEntity.ok(ApiResponse.success(null, "Línea eliminada."));
     }
 }

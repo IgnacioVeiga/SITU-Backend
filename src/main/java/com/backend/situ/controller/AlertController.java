@@ -1,10 +1,10 @@
 package com.backend.situ.controller;
 
 import com.backend.situ.model.AlertCreateDTO;
+import com.backend.situ.model.AlertResponseDTO;
 import com.backend.situ.model.AlertUpdateDTO;
 import com.backend.situ.model.ApiResponse;
 import com.backend.situ.service.AlertService;
-import com.backend.situ.entity.Alert;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +19,7 @@ public class AlertController {
     }
 
     @GetMapping("/{pageIndex}/{pageSize}")
-    public ResponseEntity<ApiResponse<Page<Alert>>> list(
+    public ResponseEntity<ApiResponse<Page<AlertResponseDTO>>> list(
             @PathVariable("pageIndex") int pageIndex,
             @PathVariable("pageSize") int pageSize,
             @RequestParam(name = "activeOnly", defaultValue = "true") boolean activeOnly
@@ -28,21 +28,21 @@ public class AlertController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Alert>> create(
+    public ResponseEntity<ApiResponse<AlertResponseDTO>> create(
             @RequestBody AlertCreateDTO request,
             @RequestAttribute("auth.subject") String subjectEmail
     ) {
-        Alert alert = this.alertService.createAlert(request, subjectEmail);
+        AlertResponseDTO alert = this.alertService.createAlert(request, subjectEmail);
         return ResponseEntity.ok(ApiResponse.success(alert, "Alerta creada."));
     }
 
     @PatchMapping("/{alertId}")
-    public ResponseEntity<ApiResponse<Alert>> update(
+    public ResponseEntity<ApiResponse<AlertResponseDTO>> update(
             @PathVariable("alertId") Long alertId,
             @RequestBody AlertUpdateDTO request,
             @RequestAttribute("auth.subject") String subjectEmail
     ) {
-        Alert alert = this.alertService.updateAlert(alertId, request, subjectEmail);
+        AlertResponseDTO alert = this.alertService.updateAlert(alertId, request, subjectEmail);
         return ResponseEntity.ok(ApiResponse.success(alert, "Alerta actualizada."));
     }
 }
