@@ -78,11 +78,13 @@ public class ComplaintService {
         this.complaintNotificationService = complaintNotificationService;
     }
 
+    @Transactional(readOnly = true)
     public Page<ComplaintResponseDTO> listComplaints(int pageIndex, int pageSize) {
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
         return complaintRepository.findAllByOrderByCreatedAtDesc(pageable).map(this::toResponseDTO);
     }
 
+    @Transactional(readOnly = true)
     public Page<ComplaintResponseDTO> listMyComplaints(String subjectEmail, int pageIndex, int pageSize) {
         User reporter = resolveUserFromSubject(subjectEmail);
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
@@ -91,12 +93,14 @@ public class ComplaintService {
                 .map(this::toResponseDTO);
     }
 
+    @Transactional(readOnly = true)
     public ComplaintResponseDTO getComplaint(Long complaintId) {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new BadRequestException("ERRORS.COMPLAINT.NOT_FOUND"));
         return toResponseDTO(complaint);
     }
 
+    @Transactional(readOnly = true)
     public ComplaintResponseDTO getComplaintByTrackingToken(String trackingToken) {
         Complaint complaint = complaintRepository.findByTrackingToken(trackingToken)
                 .orElseThrow(() -> new BadRequestException("ERRORS.COMPLAINT.NOT_FOUND"));
