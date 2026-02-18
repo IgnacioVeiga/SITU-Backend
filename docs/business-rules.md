@@ -19,6 +19,9 @@ Allowed transitions are validated server-side.
   - assign complaints.
 - Any authenticated user can list their own complaints via `/complaints/mine/...`.
 - Public tracking is available through token endpoint (`/complaints/tracking/{token}`).
+- Staff complaint listing/detail endpoints are tenant-scoped: users can only read complaints from their own company.
+- Complaint assignment is tenant-scoped: assignees must belong to the same company as the complaint.
+- Related references (`lineIds`, `routeIds`, `stopIds`) are validated against the reporter company during creation.
 
 ## Anonymous complaints
 - Anonymous mode is supported.
@@ -49,3 +52,4 @@ Allowed transitions are validated server-side.
   - `endsAt is null or endsAt >= now`
 - Any authenticated user can create alerts.
 - Updates/deactivation are limited to company staff (`ADMIN`, `SUPERVISOR`, `EMPLOYEE`).
+- Alert list and update operations are tenant-scoped by the authenticated user company.

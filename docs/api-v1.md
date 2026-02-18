@@ -27,16 +27,20 @@ All JSON endpoints use a common envelope:
 - `PATCH /complaints/{complaintId}/state` (staff)
 - `PATCH /complaints/{complaintId}/assign` (staff)
 
-Legacy compatibility:
-- `/reports/...` maps to the same complaint controller.
+Tenant isolation:
+- staff complaint endpoints are automatically scoped to the authenticated user's company.
+- complaint assignment only allows assignees from the same company.
 
 ## Alerts
 - `GET /alerts/{pageIndex}/{pageSize}` (authenticated user, active/current alerts only)
 - `POST /alerts` (authenticated user)
 - `PATCH /alerts/{alertId}` (staff)
 
+Tenant isolation:
+- alert list and update are automatically scoped to the authenticated user's company.
+
 ## Users
-- `GET /users/{pageIndex}/{pageSize}/{companyId}` (management)
+- `GET /users/{pageIndex}/{pageSize}` (management)
 - `GET /users/{id}` (management)
 - `POST /users` (management)
 - `PUT /users/{id}` (management)

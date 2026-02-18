@@ -10,9 +10,11 @@ import java.util.Optional;
 
 @Repository
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
-    Page<Complaint> findAllByOrderByCreatedAtDesc(Pageable pageable);
+    Page<Complaint> findByCompanyIdOrderByCreatedAtDesc(Long companyId, Pageable pageable);
 
-    Page<Complaint> findByReporterUserIdOrderByCreatedAtDesc(Long reporterUserId, Pageable pageable);
+    Page<Complaint> findByCompanyIdAndReporterUserIdOrderByCreatedAtDesc(Long companyId, Long reporterUserId, Pageable pageable);
+
+    Optional<Complaint> findByIdAndCompanyId(Long id, Long companyId);
 
     Optional<Complaint> findByTrackingToken(String trackingToken);
 }

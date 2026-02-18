@@ -1,12 +1,15 @@
 package com.backend.situ.service;
 
 import com.backend.situ.entity.Alert;
+import com.backend.situ.entity.Company;
 import com.backend.situ.entity.User;
 import com.backend.situ.entity.UserCredentials;
 import com.backend.situ.enums.AlertPriority;
 import com.backend.situ.exception.BadRequestException;
+import com.backend.situ.exception.NotFoundException;
 import com.backend.situ.model.AlertCreateDTO;
 import com.backend.situ.model.AlertResponseDTO;
+import com.backend.situ.model.AlertUpdateDTO;
 import com.backend.situ.repository.AlertRepository;
 import com.backend.situ.repository.AuthRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,32 +58,44 @@ class AlertServiceTest {
 
     @Test
     void shouldReturnOnlyActiveAlertsWhenActiveOnlyTrue() {
+        String subject = "admin@situ.com";
+        Company company = buildCompany(1L);
+        User user = buildUser(10L, "Admin", "User", company);
+        UserCredentials credentials = new UserCredentials(user, subject, "hash");
         Pageable pageable = PageRequest.of(0, 20);
-        Alert alert = buildAlert(1L, "Service delay");
-        when(alertRepository.findActiveAt(any(Timestamp.class), any(Pageable.class)))
+        Alert alert = buildAlert(1L, "Service delay", company);
+
+        when(authRepository.findByEmail(subject)).thenReturn(Optional.of(credentials));
+        when(alertRepository.findActiveAt(any(Long.class), any(Timestamp.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(alert), pageable, 1));
 
-        Page<AlertResponseDTO> result = alertService.listAlerts(0, 20, true);
+        Page<AlertResponseDTO> result = alertService.listAlerts(0, 20, true, subject);
 
         assertEquals(1, result.getTotalElements());
         assertEquals("Service delay", result.getContent().getFirst().title());
-        verify(alertRepository).findActiveAt(any(Timestamp.class), any(Pageable.class));
-        verify(alertRepository, never()).findAllByOrderByAlertDateDesc(any(Pageable.class));
+        verify(alertRepository).findActiveAt(any(Long.class), any(Timestamp.class), any(Pageable.class));
+        verify(alertRepository, never()).findByCompanyIdOrderByAlertDateDesc(any(Long.class), any(Pageable.class));
     }
 
     @Test
     void shouldReturnAllAlertsWhenActiveOnlyFalse() {
+        String subject = "admin@situ.com";
+        Company company = buildCompany(1L);
+        User user = buildUser(10L, "Admin", "User", company);
+        UserCredentials credentials = new UserCredentials(user, subject, "hash");
         Pageable pageable = PageRequest.of(0, 20);
-        Alert alert = buildAlert(2L, "Road closure");
-        when(alertRepository.findAllByOrderByAlertDateDesc(any(Pageable.class)))
+        Alert alert = buildAlert(2L, "Road closure", company);
+
+        when(authRepository.findByEmail(subject)).thenReturn(Optional.of(credentials));
+        when(alertRepository.findByCompanyIdOrderByAlertDateDesc(any(Long.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(alert), pageable, 1));
 
-        Page<AlertResponseDTO> result = alertService.listAlerts(0, 20, false);
+        Page<AlertResponseDTO> result = alertService.listAlerts(0, 20, false, subject);
 
         assertEquals(1, result.getTotalElements());
         assertEquals("Road closure", result.getContent().getFirst().title());
-        verify(alertRepository).findAllByOrderByAlertDateDesc(any(Pageable.class));
-        verify(alertRepository, never()).findActiveAt(any(Timestamp.class), any(Pageable.class));
+        verify(alertRepository).findByCompanyIdOrderByAlertDateDesc(any(Long.class), any(Pageable.class));
+        verify(alertRepository, never()).findActiveAt(any(Long.class), any(Timestamp.class), any(Pageable.class));
     }
 
     @Test
@@ -90,6 +105,7 @@ class AlertServiceTest {
         creator.setId(50L);
         creator.setFirstName("Admin");
         creator.setLastName("User");
+        creator.setCompany(buildCompany(1L));
 
         UserCredentials credentials = new UserCredentials(creator, subject, "hash");
         when(authRepository.findByEmail(subject)).thenReturn(Optional.of(credentials));
@@ -118,6 +134,7 @@ class AlertServiceTest {
         creator.setId(11L);
         creator.setFirstName("Eva");
         creator.setLastName("Lopez");
+        creator.setCompany(buildCompany(1L));
         UserCredentials credentials = new UserCredentials(creator, subject, "hash");
 
         when(authRepository.findByEmail(subject)).thenReturn(Optional.of(credentials));
@@ -146,9 +163,34 @@ class AlertServiceTest {
         verify(eventPublisher).publishEvent(any());
     }
 
-    private Alert buildAlert(Long id, String title) {
+    @Test
+    void shouldRejectAlertUpdateOutsideCurrentCompany() {
+        String subject = "staff@situ.com";
+        Company company = buildCompany(1L);
+        User staff = buildUser(15L, "Staff", "User", company);
+        UserCredentials credentials = new UserCredentials(staff, subject, "hash");
+
+        when(authRepository.findByEmail(subject)).thenReturn(Optional.of(credentials));
+        when(alertRepository.findByIdAndCompanyId(999L, 1L)).thenReturn(Optional.empty());
+
+        AlertUpdateDTO request = new AlertUpdateDTO(
+                "Updated",
+                "Updated description",
+                "Updated location",
+                AlertPriority.LOW,
+                null,
+                null,
+                true
+        );
+
+        assertThrows(NotFoundException.class, () -> alertService.updateAlert(999L, request, subject));
+        verify(alertRepository, never()).save(any(Alert.class));
+    }
+
+    private Alert buildAlert(Long id, String title, Company company) {
         Alert alert = new Alert();
         alert.setId(id);
+        alert.setCompany(company);
         alert.setTitle(title);
         alert.setDescription("Description");
         alert.setAlertDate(Timestamp.from(Instant.now()));
@@ -162,7 +204,24 @@ class AlertServiceTest {
         user.setId(1L);
         user.setFirstName("Juan");
         user.setLastName("Perez");
+        user.setCompany(company);
         alert.setUser(user);
         return alert;
+    }
+
+    private Company buildCompany(Long id) {
+        Company company = new Company();
+        company.setId(id);
+        company.setName("Company " + id);
+        return company;
+    }
+
+    private User buildUser(Long id, String firstName, String lastName, Company company) {
+        User user = new User();
+        user.setId(id);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setCompany(company);
+        return user;
     }
 }

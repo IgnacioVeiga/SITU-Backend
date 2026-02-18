@@ -13,6 +13,10 @@ public class Alert {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "company_id")
+    private Company company;
+
+    @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
@@ -55,6 +59,14 @@ public class Alert {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Company getCompany() {
+        return company;
+    }
+
+    public void setCompany(Company company) {
+        this.company = company;
     }
 
     public String getTitle() {
@@ -127,6 +139,7 @@ public class Alert {
     public Alert(
             Long id,
             User user,
+            Company company,
             String title,
             String description,
             Timestamp alertDate,
@@ -138,6 +151,7 @@ public class Alert {
     ) {
         this.id = id;
         this.user = user;
+        this.company = company;
         this.title = title;
         this.description = description;
         this.alertDate = alertDate;

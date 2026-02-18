@@ -1,6 +1,8 @@
 package com.backend.situ.service;
 
+import com.backend.situ.entity.Company;
 import com.backend.situ.entity.Complaint;
+import com.backend.situ.entity.Line;
 import com.backend.situ.entity.User;
 import com.backend.situ.entity.UserCredentials;
 import com.backend.situ.enums.ComplaintState;
@@ -86,7 +88,8 @@ class ComplaintServiceTest {
     @Test
     void shouldCreateComplaintWithDefaultsAndMaskedContact() {
         String subject = "passenger@example.com";
-        User reporter = createUser(10L, "Pablo", "Passenger");
+        Company company = createCompany(1L, "Company One");
+        User reporter = createUser(10L, "Pablo", "Passenger", company);
         UserCredentials credentials = new UserCredentials(reporter, subject, "hash");
 
         when(authRepository.findByEmail(subject)).thenReturn(Optional.of(credentials));
@@ -128,30 +131,14 @@ class ComplaintServiceTest {
 
     @Test
     void shouldRejectInvalidStateTransition() {
+        String subject = "staff@example.com";
+        Company company = createCompany(1L, "Company One");
+        User staff = createUser(20L, "Staff", "User", company);
+        UserCredentials credentials = new UserCredentials(staff, subject, "hash");
+
         Complaint complaint = new Complaint();
         complaint.setId(25L);
-        complaint.setState(ComplaintState.PENDING_REVIEW);
-        complaint.setCreatedAt(Timestamp.from(java.time.Instant.now()));
-        complaint.setUpdatedAt(Timestamp.from(java.time.Instant.now()));
-        complaint.setResponseDueAt(Timestamp.from(java.time.Instant.now()));
-        complaint.setResolutionDueAt(Timestamp.from(java.time.Instant.now()));
-
-        when(complaintRepository.findById(25L)).thenReturn(Optional.of(complaint));
-
-        ComplaintStateUpdateDTO request = new ComplaintStateUpdateDTO(ComplaintState.REOPENED);
-
-        assertThrows(BadRequestException.class, () -> complaintService.updateComplaintState(25L, request, "staff@example.com"));
-        verify(complaintRepository, never()).save(any(Complaint.class));
-    }
-
-    @Test
-    void shouldMoveComplaintToInReviewAndAssignCurrentUser() {
-        String subject = "employee@example.com";
-        User assignee = createUser(99L, "Eva", "Employee");
-        UserCredentials credentials = new UserCredentials(assignee, subject, "hash");
-
-        Complaint complaint = new Complaint();
-        complaint.setId(33L);
+        complaint.setCompany(company);
         complaint.setState(ComplaintState.PENDING_REVIEW);
         complaint.setCreatedAt(Timestamp.from(java.time.Instant.now()));
         complaint.setUpdatedAt(Timestamp.from(java.time.Instant.now()));
@@ -159,7 +146,32 @@ class ComplaintServiceTest {
         complaint.setResolutionDueAt(Timestamp.from(java.time.Instant.now()));
 
         when(authRepository.findByEmail(subject)).thenReturn(Optional.of(credentials));
-        when(complaintRepository.findById(33L)).thenReturn(Optional.of(complaint));
+        when(complaintRepository.findByIdAndCompanyId(25L, 1L)).thenReturn(Optional.of(complaint));
+
+        ComplaintStateUpdateDTO request = new ComplaintStateUpdateDTO(ComplaintState.REOPENED);
+
+        assertThrows(BadRequestException.class, () -> complaintService.updateComplaintState(25L, request, subject));
+        verify(complaintRepository, never()).save(any(Complaint.class));
+    }
+
+    @Test
+    void shouldMoveComplaintToInReviewAndAssignCurrentUser() {
+        String subject = "employee@example.com";
+        Company company = createCompany(1L, "Company One");
+        User assignee = createUser(99L, "Eva", "Employee", company);
+        UserCredentials credentials = new UserCredentials(assignee, subject, "hash");
+
+        Complaint complaint = new Complaint();
+        complaint.setId(33L);
+        complaint.setCompany(company);
+        complaint.setState(ComplaintState.PENDING_REVIEW);
+        complaint.setCreatedAt(Timestamp.from(java.time.Instant.now()));
+        complaint.setUpdatedAt(Timestamp.from(java.time.Instant.now()));
+        complaint.setResponseDueAt(Timestamp.from(java.time.Instant.now()));
+        complaint.setResolutionDueAt(Timestamp.from(java.time.Instant.now()));
+
+        when(authRepository.findByEmail(subject)).thenReturn(Optional.of(credentials));
+        when(complaintRepository.findByIdAndCompanyId(33L, 1L)).thenReturn(Optional.of(complaint));
         when(complaintRepository.save(any(Complaint.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ComplaintStateUpdateDTO request = new ComplaintStateUpdateDTO(ComplaintState.IN_REVIEW);
@@ -175,12 +187,14 @@ class ComplaintServiceTest {
     @Test
     void shouldReturnOnlyAuthenticatedUserComplaints() {
         String subject = "passenger@example.com";
-        User reporter = createUser(50L, "Pia", "Passenger");
+        Company company = createCompany(1L, "Company One");
+        User reporter = createUser(50L, "Pia", "Passenger", company);
         UserCredentials credentials = new UserCredentials(reporter, subject, "hash");
         Pageable pageable = PageRequest.of(0, 10);
 
         Complaint complaint = new Complaint();
         complaint.setId(1L);
+        complaint.setCompany(company);
         complaint.setReporterUser(reporter);
         complaint.setState(ComplaintState.PENDING_REVIEW);
         complaint.setCreatedAt(Timestamp.from(java.time.Instant.now()));
@@ -189,21 +203,90 @@ class ComplaintServiceTest {
         complaint.setResolutionDueAt(Timestamp.from(java.time.Instant.now()));
 
         when(authRepository.findByEmail(subject)).thenReturn(Optional.of(credentials));
-        when(complaintRepository.findByReporterUserIdOrderByCreatedAtDesc(50L, pageable))
+        when(complaintRepository.findByCompanyIdAndReporterUserIdOrderByCreatedAtDesc(1L, 50L, pageable))
                 .thenReturn(new PageImpl<>(java.util.List.of(complaint), pageable, 1));
 
         var page = complaintService.listMyComplaints(subject, 0, 10);
 
         assertEquals(1, page.getTotalElements());
         assertEquals(1L, page.getContent().getFirst().id());
-        verify(complaintRepository, times(1)).findByReporterUserIdOrderByCreatedAtDesc(50L, pageable);
+        verify(complaintRepository, times(1)).findByCompanyIdAndReporterUserIdOrderByCreatedAtDesc(1L, 50L, pageable);
     }
 
-    private User createUser(Long id, String firstName, String lastName) {
+    @Test
+    void shouldRejectComplaintCreateWhenLineBelongsToAnotherCompany() {
+        String subject = "passenger@example.com";
+        Company reporterCompany = createCompany(1L, "Company One");
+        Company foreignCompany = createCompany(2L, "Company Two");
+        User reporter = createUser(10L, "Pablo", "Passenger", reporterCompany);
+        UserCredentials credentials = new UserCredentials(reporter, subject, "hash");
+
+        Line foreignLine = new Line();
+        foreignLine.setId(77L);
+        foreignLine.setNumber("77");
+        foreignLine.setCompany(foreignCompany);
+
+        when(authRepository.findByEmail(subject)).thenReturn(Optional.of(credentials));
+        when(lineRepository.findAllById(java.util.Set.of(77L))).thenReturn(java.util.List.of(foreignLine));
+
+        ComplaintCreateDTO request = new ComplaintCreateDTO(
+                "Cross-tenant line should fail",
+                "Service quality",
+                null,
+                false,
+                "john@example.com",
+                "1122334455",
+                null,
+                java.util.List.of(77L),
+                null,
+                null
+        );
+
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> complaintService.createComplaint(request, subject));
+        assertEquals("ERRORS.COMPLAINT.LINE_NOT_FOUND", ex.getMessage());
+        verify(complaintRepository, never()).save(any(Complaint.class));
+    }
+
+    @Test
+    void shouldRejectAssignWhenAssigneeIsOutsideCurrentCompany() {
+        String subject = "employee@example.com";
+        Company company = createCompany(1L, "Company One");
+        User staff = createUser(99L, "Eva", "Employee", company);
+        UserCredentials credentials = new UserCredentials(staff, subject, "hash");
+
+        Complaint complaint = new Complaint();
+        complaint.setId(33L);
+        complaint.setCompany(company);
+        complaint.setState(ComplaintState.PENDING_REVIEW);
+        complaint.setCreatedAt(Timestamp.from(java.time.Instant.now()));
+        complaint.setUpdatedAt(Timestamp.from(java.time.Instant.now()));
+        complaint.setResponseDueAt(Timestamp.from(java.time.Instant.now()));
+        complaint.setResolutionDueAt(Timestamp.from(java.time.Instant.now()));
+
+        when(authRepository.findByEmail(subject)).thenReturn(Optional.of(credentials));
+        when(complaintRepository.findByIdAndCompanyId(33L, 1L)).thenReturn(Optional.of(complaint));
+        when(userRepository.findByIdAndCompanyId(888L, 1L)).thenReturn(Optional.empty());
+
+        var request = new com.backend.situ.model.ComplaintAssignDTO(888L);
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> complaintService.assignComplaint(33L, request, subject));
+
+        assertEquals("ERRORS.COMPLAINT.ASSIGNEE_NOT_FOUND", ex.getMessage());
+        verify(complaintRepository, never()).save(any(Complaint.class));
+    }
+
+    private User createUser(Long id, String firstName, String lastName, Company company) {
         User user = new User();
         user.setId(id);
         user.setFirstName(firstName);
         user.setLastName(lastName);
+        user.setCompany(company);
         return user;
+    }
+
+    private Company createCompany(Long id, String name) {
+        Company company = new Company();
+        company.setId(id);
+        company.setName(name);
+        return company;
     }
 }

@@ -1,5 +1,6 @@
 package com.backend.situ.service;
 
+import com.backend.situ.entity.Company;
 import com.backend.situ.entity.Complaint;
 import com.backend.situ.entity.Line;
 import com.backend.situ.entity.Route;
@@ -35,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -79,23 +81,26 @@ public class ComplaintService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ComplaintResponseDTO> listComplaints(int pageIndex, int pageSize) {
+    public Page<ComplaintResponseDTO> listComplaints(String subjectEmail, int pageIndex, int pageSize) {
+        Long companyId = resolveCompanyId(resolveUserFromSubject(subjectEmail));
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
-        return complaintRepository.findAllByOrderByCreatedAtDesc(pageable).map(this::toResponseDTO);
+        return complaintRepository.findByCompanyIdOrderByCreatedAtDesc(companyId, pageable).map(this::toResponseDTO);
     }
 
     @Transactional(readOnly = true)
     public Page<ComplaintResponseDTO> listMyComplaints(String subjectEmail, int pageIndex, int pageSize) {
         User reporter = resolveUserFromSubject(subjectEmail);
+        Long companyId = resolveCompanyId(reporter);
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
         return complaintRepository
-                .findByReporterUserIdOrderByCreatedAtDesc(reporter.getId(), pageable)
+                .findByCompanyIdAndReporterUserIdOrderByCreatedAtDesc(companyId, reporter.getId(), pageable)
                 .map(this::toResponseDTO);
     }
 
     @Transactional(readOnly = true)
-    public ComplaintResponseDTO getComplaint(Long complaintId) {
-        Complaint complaint = complaintRepository.findById(complaintId)
+    public ComplaintResponseDTO getComplaint(Long complaintId, String subjectEmail) {
+        Long companyId = resolveCompanyId(resolveUserFromSubject(subjectEmail));
+        Complaint complaint = complaintRepository.findByIdAndCompanyId(complaintId, companyId)
                 .orElseThrow(() -> new BadRequestException("ERRORS.COMPLAINT.NOT_FOUND"));
         return toResponseDTO(complaint);
     }
@@ -114,10 +119,13 @@ public class ComplaintService {
         }
 
         User reporter = resolveUserFromSubject(subjectEmail);
+        Company company = reporter.getCompany();
+        Long companyId = resolveCompanyId(reporter);
         ComplaintPriority priority = request.priority() == null ? ComplaintPriority.MEDIUM : request.priority();
         Timestamp now = Timestamp.from(Instant.now());
 
         Complaint complaint = new Complaint();
+        complaint.setCompany(company);
         complaint.setReporterUser(reporter);
         complaint.setDescription(request.description().trim());
         complaint.setReason(request.reason());
@@ -131,9 +139,9 @@ public class ComplaintService {
         complaint.setResolutionDueAt(Timestamp.from(resolveResolutionSla(now.toInstant(), priority)));
         complaint.setContactEmailEncrypted(sensitiveDataService.encrypt(request.contactEmail()));
         complaint.setContactPhoneEncrypted(sensitiveDataService.encrypt(request.contactPhone()));
-        complaint.setRelatedLines(resolveLines(request.lineIds()));
-        complaint.setRelatedRoutes(resolveRoutes(request.routeIds()));
-        complaint.setRelatedStops(resolveStops(request.stopIds()));
+        complaint.setRelatedLines(resolveLines(request.lineIds(), companyId));
+        complaint.setRelatedRoutes(resolveRoutes(request.routeIds(), companyId));
+        complaint.setRelatedStops(resolveStops(request.stopIds(), companyId));
 
         if (request.reportImageId() != null) {
             ReportImage reportImage = reportImageRepository.findById(request.reportImageId())
@@ -159,7 +167,8 @@ public class ComplaintService {
             throw new BadRequestException("ERRORS.COMPLAINT.STATE_REQUIRED");
         }
 
-        Complaint complaint = complaintRepository.findById(complaintId)
+        Long companyId = resolveCompanyId(resolveUserFromSubject(subjectEmail));
+        Complaint complaint = complaintRepository.findByIdAndCompanyId(complaintId, companyId)
                 .orElseThrow(() -> new BadRequestException("ERRORS.COMPLAINT.NOT_FOUND"));
 
         ComplaintState currentState = complaint.getState();
@@ -202,10 +211,11 @@ public class ComplaintService {
             throw new BadRequestException("ERRORS.COMPLAINT.ASSIGNEE_REQUIRED");
         }
 
-        Complaint complaint = complaintRepository.findById(complaintId)
+        Long companyId = resolveCompanyId(resolveUserFromSubject(subjectEmail));
+        Complaint complaint = complaintRepository.findByIdAndCompanyId(complaintId, companyId)
                 .orElseThrow(() -> new BadRequestException("ERRORS.COMPLAINT.NOT_FOUND"));
 
-        User assignee = userRepository.findById(request.assigneeUserId())
+        User assignee = userRepository.findByIdAndCompanyId(request.assigneeUserId(), companyId)
                 .orElseThrow(() -> new BadRequestException("ERRORS.COMPLAINT.ASSIGNEE_NOT_FOUND"));
 
         complaint.setAssigneeUser(assignee);
@@ -227,25 +237,69 @@ public class ComplaintService {
         return credentials.getUser();
     }
 
-    private Set<Line> resolveLines(List<Long> lineIds) {
+    private Long resolveCompanyId(User user) {
+        if (user.getCompany() == null || user.getCompany().getId() == null) {
+            throw new BadRequestException("ERRORS.AUTH.USER_NOT_FOUND");
+        }
+        return user.getCompany().getId();
+    }
+
+    private Set<Line> resolveLines(List<Long> lineIds, Long companyId) {
         if (lineIds == null || lineIds.isEmpty()) {
             return Set.of();
         }
-        return lineRepository.findAllById(lineIds).stream().collect(Collectors.toSet());
+
+        Set<Long> requested = new LinkedHashSet<>(lineIds);
+        Set<Line> lines = lineRepository.findAllById(requested).stream().collect(Collectors.toSet());
+        if (lines.size() != requested.size()) {
+            throw new BadRequestException("ERRORS.COMPLAINT.LINE_NOT_FOUND");
+        }
+
+        boolean outsideTenant = lines.stream()
+                .anyMatch(line -> line.getCompany() == null || !companyId.equals(line.getCompany().getId()));
+        if (outsideTenant) {
+            throw new BadRequestException("ERRORS.COMPLAINT.LINE_NOT_FOUND");
+        }
+        return lines;
     }
 
-    private Set<Route> resolveRoutes(List<Long> routeIds) {
+    private Set<Route> resolveRoutes(List<Long> routeIds, Long companyId) {
         if (routeIds == null || routeIds.isEmpty()) {
             return Set.of();
         }
-        return routeRepository.findAllById(routeIds).stream().collect(Collectors.toSet());
+
+        Set<Long> requested = new LinkedHashSet<>(routeIds);
+        Set<Route> routes = routeRepository.findAllById(requested).stream().collect(Collectors.toSet());
+        if (routes.size() != requested.size()) {
+            throw new BadRequestException("ERRORS.COMPLAINT.ROUTE_NOT_FOUND");
+        }
+
+        boolean outsideTenant = routes.stream().anyMatch(route ->
+                route.getLine() == null
+                        || route.getLine().getCompany() == null
+                        || !companyId.equals(route.getLine().getCompany().getId()));
+        if (outsideTenant) {
+            throw new BadRequestException("ERRORS.COMPLAINT.ROUTE_NOT_FOUND");
+        }
+        return routes;
     }
 
-    private Set<Stop> resolveStops(List<Long> stopIds) {
+    private Set<Stop> resolveStops(List<Long> stopIds, Long companyId) {
         if (stopIds == null || stopIds.isEmpty()) {
             return Set.of();
         }
-        return stopRepository.findAllById(stopIds).stream().collect(Collectors.toSet());
+
+        Set<Long> requested = new LinkedHashSet<>(stopIds);
+        Set<Stop> stops = stopRepository.findAllById(requested).stream().collect(Collectors.toSet());
+        if (stops.size() != requested.size()) {
+            throw new BadRequestException("ERRORS.COMPLAINT.STOP_NOT_FOUND");
+        }
+
+        boolean outsideTenant = requested.stream().anyMatch(stopId -> !stopRepository.existsByIdAndCompanyId(stopId, companyId));
+        if (outsideTenant) {
+            throw new BadRequestException("ERRORS.COMPLAINT.STOP_NOT_FOUND");
+        }
+        return stops;
     }
 
     private String generateTrackingToken() {

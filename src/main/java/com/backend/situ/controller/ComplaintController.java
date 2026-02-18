@@ -23,9 +23,10 @@ public class ComplaintController {
     @GetMapping("/{pageIndex}/{pageSize}")
     public ResponseEntity<ApiResponse<Page<ComplaintResponseDTO>>> list(
             @PathVariable("pageIndex") int pageIndex,
-            @PathVariable("pageSize") int pageSize
+            @PathVariable("pageSize") int pageSize,
+            @RequestAttribute("auth.subject") String subjectEmail
     ) {
-        Page<ComplaintResponseDTO> complaints = complaintService.listComplaints(pageIndex, pageSize);
+        Page<ComplaintResponseDTO> complaints = complaintService.listComplaints(subjectEmail, pageIndex, pageSize);
         return ResponseEntity.ok(ApiResponse.success(complaints, null));
     }
 
@@ -40,8 +41,11 @@ public class ComplaintController {
     }
 
     @GetMapping("/{complaintId}")
-    public ResponseEntity<ApiResponse<ComplaintResponseDTO>> get(@PathVariable("complaintId") Long complaintId) {
-        ComplaintResponseDTO complaint = complaintService.getComplaint(complaintId);
+    public ResponseEntity<ApiResponse<ComplaintResponseDTO>> get(
+            @PathVariable("complaintId") Long complaintId,
+            @RequestAttribute("auth.subject") String subjectEmail
+    ) {
+        ComplaintResponseDTO complaint = complaintService.getComplaint(complaintId, subjectEmail);
         return ResponseEntity.ok(ApiResponse.success(complaint, null));
     }
 

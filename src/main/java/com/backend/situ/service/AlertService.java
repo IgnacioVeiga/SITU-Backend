@@ -1,6 +1,7 @@
 package com.backend.situ.service;
 
 import com.backend.situ.entity.Alert;
+import com.backend.situ.entity.Company;
 import com.backend.situ.entity.User;
 import com.backend.situ.entity.UserCredentials;
 import com.backend.situ.enums.AlertPriority;
@@ -43,14 +44,15 @@ public class AlertService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AlertResponseDTO> listAlerts(int pageIndex, int pageSize, boolean activeOnly) {
+    public Page<AlertResponseDTO> listAlerts(int pageIndex, int pageSize, boolean activeOnly, String subjectEmail) {
+        Long companyId = resolveCompanyId(resolveUserFromSubject(subjectEmail));
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
         Page<Alert> alerts;
         if (!activeOnly) {
-            alerts = this.alertRepository.findAllByOrderByAlertDateDesc(pageable);
+            alerts = this.alertRepository.findByCompanyIdOrderByAlertDateDesc(companyId, pageable);
         } else {
             Timestamp now = Timestamp.from(Instant.now());
-            alerts = this.alertRepository.findActiveAt(now, pageable);
+            alerts = this.alertRepository.findActiveAt(companyId, now, pageable);
         }
         return alerts.map(this::toResponseDTO);
     }
@@ -66,9 +68,12 @@ public class AlertService {
         }
 
         User creator = resolveUserFromSubject(subjectEmail);
+        resolveCompanyId(creator);
+        Company company = creator.getCompany();
         Timestamp now = Timestamp.from(Instant.now());
 
         Alert alert = new Alert();
+        alert.setCompany(company);
         alert.setUser(creator);
         alert.setTitle(request.title().trim());
         alert.setDescription(request.description().trim());
@@ -88,7 +93,8 @@ public class AlertService {
 
     @Transactional
     public AlertResponseDTO updateAlert(Long alertId, AlertUpdateDTO request, String subjectEmail) {
-        Alert alert = alertRepository.findById(alertId)
+        Long companyId = resolveCompanyId(resolveUserFromSubject(subjectEmail));
+        Alert alert = alertRepository.findByIdAndCompanyId(alertId, companyId)
                 .orElseThrow(() -> new NotFoundException("ERRORS.ALERT.NOT_FOUND"));
 
         if (request.title() != null && !request.title().isBlank()) {
@@ -133,6 +139,13 @@ public class AlertService {
             throw new BadRequestException("ERRORS.AUTH.USER_NOT_FOUND");
         }
         return credentials.getUser();
+    }
+
+    private Long resolveCompanyId(User user) {
+        if (user.getCompany() == null || user.getCompany().getId() == null) {
+            throw new BadRequestException("ERRORS.AUTH.USER_NOT_FOUND");
+        }
+        return user.getCompany().getId();
     }
 
     private void validateAlertWindow(Timestamp startsAt, Timestamp endsAt) {

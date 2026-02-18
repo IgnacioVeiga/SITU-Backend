@@ -18,6 +18,10 @@ public class Complaint {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "company_id")
+    private Company company;
+
+    @ManyToOne
     @JoinColumn(name = "reporter_user_id")
     private User reporterUser;
 
@@ -116,6 +120,14 @@ public class Complaint {
 
     public void setReporterUser(User reporterUser) {
         this.reporterUser = reporterUser;
+    }
+
+    public Company getCompany() {
+        return company;
+    }
+
+    public void setCompany(Company company) {
+        this.company = company;
     }
 
     public User getAssigneeUser() {

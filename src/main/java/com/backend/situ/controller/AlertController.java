@@ -22,9 +22,10 @@ public class AlertController {
     public ResponseEntity<ApiResponse<Page<AlertResponseDTO>>> list(
             @PathVariable("pageIndex") int pageIndex,
             @PathVariable("pageSize") int pageSize,
-            @RequestParam(name = "activeOnly", defaultValue = "true") boolean activeOnly
+            @RequestParam(name = "activeOnly", defaultValue = "true") boolean activeOnly,
+            @RequestAttribute("auth.subject") String subjectEmail
     ) {
-        return ResponseEntity.ok(ApiResponse.success(this.alertService.listAlerts(pageIndex, pageSize, activeOnly), null));
+        return ResponseEntity.ok(ApiResponse.success(this.alertService.listAlerts(pageIndex, pageSize, activeOnly, subjectEmail), null));
     }
 
     @PostMapping
