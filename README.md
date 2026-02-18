@@ -41,14 +41,21 @@ docker compose down
 ## Starter scripts
 You can start backend and/or DB with:
 
-- Linux/macOS: `./run.sh [dev|qa|prod] [local|docker]`
-- PowerShell: `./run.ps1 [dev|qa|prod] [local|docker]`
-- CMD: `run.bat [dev|qa|prod] [local|docker]`
+- Linux/macOS: `./run.sh [dev|qa|prod] [local|docker|auto]`
+- PowerShell: `./run.ps1 [dev|qa|prod] [local|docker|auto]`
+- CMD: `run.bat [dev|qa|prod] [local|docker|auto]`
 
 Examples:
 
 - `./run.sh dev local` -> start backend app with `.env.dev`.
 - `./run.sh dev docker` -> start only PostgreSQL container using `.env.dev`.
+- `./run.sh dev auto` -> start PostgreSQL container, wait for health, then start backend.
+
+Convenience dev wrappers (no args required):
+
+- Linux/macOS: `./start-dev.sh`
+- PowerShell: `./start-dev.ps1`
+- CMD: `start-dev.bat`
 
 ## Quality checks
 Run tests:

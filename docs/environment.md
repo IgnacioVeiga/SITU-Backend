@@ -80,3 +80,39 @@ Useful optional vars for compose:
 POSTGRES_DB=situ_dev
 POSTGRES_PORT=5432
 ```
+
+## IntelliJ setup (recommended for dev)
+
+Create a Docker Compose run configuration called `DB - Dev`:
+
+1. Compose file: `docker-compose.yml`
+2. Service: `postgres`
+3. Command: `up`
+4. Options: `-d`
+5. Environment file: `.env.dev`
+
+If your IntelliJ version does not support an environment file in Docker Compose config, set these variables manually in the run configuration:
+
+```env
+DB_USERNAME=user_admin
+DB_PASSWORD=admin@123
+POSTGRES_DB=situ_dev
+POSTGRES_PORT=5432
+APP_TIMEZONE=America/Argentina/Buenos_Aires
+```
+
+Then run backend using `Backend - Dev` (`.run/Backend - Dev.run.xml`), which loads `.env.dev`.
+
+## Automatic startup scripts
+
+Use one command to start DB + backend in dev:
+
+- Linux/macOS: `./start-dev.sh`
+- PowerShell: `./start-dev.ps1`
+- CMD: `start-dev.bat`
+
+These wrappers call `run.* dev auto`, which:
+
+1. starts PostgreSQL with `.env.dev`
+2. waits until DB health is `healthy`
+3. starts Spring Boot in dev profile
