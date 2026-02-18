@@ -16,7 +16,7 @@ It powers authentication, complaints, alerts, users, transit entities (lines/rou
 ## Quick start
 1. Copy `.env.example` to your local environment file (`.env.dev`, `.env.qa`, or `.env.prod`).
 2. Set `SPRING_PROFILES_ACTIVE` to `dev`, `qa`, or `prod`.
-3. Fill required variables (DB, JWT, CORS, mail, encryption key).
+3. Fill required variables (DB, JWT, CORS, mail, encryption key, tracking hash secret).
 4. Run:
 
 ```bash

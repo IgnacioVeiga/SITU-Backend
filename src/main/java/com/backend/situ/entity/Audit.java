@@ -13,14 +13,19 @@ public class Audit {
     
     @Enumerated(EnumType.STRING)
     private AuditAction action;
+
+    @ManyToOne
+    @JoinColumn(name = "company_id")
+    private Company company;
     
     private String username;
     private String details;
     private LocalDateTime date;
 
     public Audit() {}
-    public Audit(AuditAction action, String username, String details, LocalDateTime date) {
+    public Audit(AuditAction action, Company company, String username, String details, LocalDateTime date) {
         this.action = action;
+        this.company = company;
         this.username = username;
         this.details = details;
         this.date = date;
@@ -39,6 +44,14 @@ public class Audit {
 
     public void setAction(AuditAction action) {
         this.action = action;
+    }
+
+    public Company getCompany() {
+        return company;
+    }
+
+    public void setCompany(Company company) {
+        this.company = company;
     }
 
     public String getUsername() {

@@ -20,9 +20,13 @@ Resolved locations by profile:
 3. Keep `prod` scripts deterministic and idempotent when possible.
 4. Never move/delete already-applied versioned SQL files in shared branches.
 
-## Multi-tenant notes
+## Current baseline (v2.0.0)
 
-- `V0_5__enforce_company_tenant_isolation.sql` introduces `company_id` on `complaints` and `alerts`.
-- Existing rows are backfilled from creator/reporter users.
-- Migration fails fast if any complaint/alert cannot be linked to a company.
-- Composite indexes are created to keep tenant-scoped read paths efficient.
+- `common/V1__init_schema.sql` is the single clean bootstrap for a fresh database.
+- `dev/V101__seed_dev_data.sql` provides development fixtures (users, lines, routes, stops, alerts).
+- `qa` and `prod` currently do not include sample data.
+
+## Important reset note
+
+- Migration history was unified for a clean install flow.
+- Existing databases migrated with old `V0_*` scripts must be recreated before applying this baseline.

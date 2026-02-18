@@ -30,6 +30,7 @@ All JSON endpoints use a common envelope:
 Tenant isolation:
 - staff complaint endpoints are automatically scoped to the authenticated user's company.
 - complaint assignment only allows assignees from the same company.
+- tracking token is intentionally omitted in staff-wide complaint responses.
 
 ## Alerts
 - `GET /alerts/{pageIndex}/{pageSize}` (authenticated user, active/current alerts only)

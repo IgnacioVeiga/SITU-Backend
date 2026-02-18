@@ -40,6 +40,14 @@ DATA_ENCRYPTION_KEY=replace-with-a-strong-secret
 `DATA_ENCRYPTION_KEY` is used to encrypt/decrypt complaint contact fields in the database.
 Use a strong key in QA/production and rotate it through a controlled process.
 
+## Tracking token hashing
+```env
+TRACKING_TOKEN_HASH_SECRET=replace-with-a-different-strong-secret
+```
+
+`TRACKING_TOKEN_HASH_SECRET` is used for HMAC-SHA256 hashing of complaint tracking tokens.
+The plain tracking token is never stored in DB.
+
 ## Mail
 ```env
 MAIL_HOST=smtp.gmail.com

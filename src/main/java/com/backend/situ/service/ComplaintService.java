@@ -39,7 +39,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,6 +53,7 @@ public class ComplaintService {
     private final StopRepository stopRepository;
     private final ReportImageRepository reportImageRepository;
     private final SensitiveDataService sensitiveDataService;
+    private final TrackingTokenService trackingTokenService;
     private final ComplaintNotificationService complaintNotificationService;
 
     public ComplaintService(
@@ -66,6 +66,7 @@ public class ComplaintService {
             StopRepository stopRepository,
             ReportImageRepository reportImageRepository,
             SensitiveDataService sensitiveDataService,
+            TrackingTokenService trackingTokenService,
             ComplaintNotificationService complaintNotificationService
     ) {
         this.eventPublisher = eventPublisher;
@@ -77,6 +78,7 @@ public class ComplaintService {
         this.stopRepository = stopRepository;
         this.reportImageRepository = reportImageRepository;
         this.sensitiveDataService = sensitiveDataService;
+        this.trackingTokenService = trackingTokenService;
         this.complaintNotificationService = complaintNotificationService;
     }
 
@@ -84,7 +86,9 @@ public class ComplaintService {
     public Page<ComplaintResponseDTO> listComplaints(String subjectEmail, int pageIndex, int pageSize) {
         Long companyId = resolveCompanyId(resolveUserFromSubject(subjectEmail));
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
-        return complaintRepository.findByCompanyIdOrderByCreatedAtDesc(companyId, pageable).map(this::toResponseDTO);
+        return complaintRepository
+                .findByCompanyIdOrderByCreatedAtDesc(companyId, pageable)
+                .map(complaint -> toResponseDTO(complaint, false));
     }
 
     @Transactional(readOnly = true)
@@ -94,7 +98,7 @@ public class ComplaintService {
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
         return complaintRepository
                 .findByCompanyIdAndReporterUserIdOrderByCreatedAtDesc(companyId, reporter.getId(), pageable)
-                .map(this::toResponseDTO);
+                .map(complaint -> toResponseDTO(complaint, true));
     }
 
     @Transactional(readOnly = true)
@@ -102,14 +106,19 @@ public class ComplaintService {
         Long companyId = resolveCompanyId(resolveUserFromSubject(subjectEmail));
         Complaint complaint = complaintRepository.findByIdAndCompanyId(complaintId, companyId)
                 .orElseThrow(() -> new BadRequestException("ERRORS.COMPLAINT.NOT_FOUND"));
-        return toResponseDTO(complaint);
+        return toResponseDTO(complaint, false);
     }
 
     @Transactional(readOnly = true)
     public ComplaintResponseDTO getComplaintByTrackingToken(String trackingToken) {
-        Complaint complaint = complaintRepository.findByTrackingToken(trackingToken)
+        String normalizedToken = trackingTokenService.normalizeToken(trackingToken);
+        if (normalizedToken == null) {
+            throw new BadRequestException("ERRORS.COMPLAINT.NOT_FOUND");
+        }
+
+        Complaint complaint = complaintRepository.findByTrackingTokenHash(trackingTokenService.hashToken(normalizedToken))
                 .orElseThrow(() -> new BadRequestException("ERRORS.COMPLAINT.NOT_FOUND"));
-        return toResponseDTO(complaint);
+        return toResponseDTO(complaint, true);
     }
 
     @Transactional
@@ -123,6 +132,7 @@ public class ComplaintService {
         Long companyId = resolveCompanyId(reporter);
         ComplaintPriority priority = request.priority() == null ? ComplaintPriority.MEDIUM : request.priority();
         Timestamp now = Timestamp.from(Instant.now());
+        String publicTrackingToken = trackingTokenService.generateToken();
 
         Complaint complaint = new Complaint();
         complaint.setCompany(company);
@@ -132,7 +142,8 @@ public class ComplaintService {
         complaint.setPriority(priority);
         complaint.setState(ComplaintState.PENDING_REVIEW);
         complaint.setAnonymous(Boolean.TRUE.equals(request.anonymous()));
-        complaint.setTrackingToken(generateTrackingToken());
+        complaint.setTrackingTokenEncrypted(sensitiveDataService.encrypt(publicTrackingToken));
+        complaint.setTrackingTokenHash(trackingTokenService.hashToken(publicTrackingToken));
         complaint.setCreatedAt(now);
         complaint.setUpdatedAt(now);
         complaint.setResponseDueAt(Timestamp.from(resolveResponseSla(now.toInstant(), priority)));
@@ -144,7 +155,7 @@ public class ComplaintService {
         complaint.setRelatedStops(resolveStops(request.stopIds(), companyId));
 
         if (request.reportImageId() != null) {
-            ReportImage reportImage = reportImageRepository.findById(request.reportImageId())
+            ReportImage reportImage = reportImageRepository.findByIdAndCompanyId(request.reportImageId(), companyId)
                     .orElseThrow(() -> new BadRequestException("ERRORS.COMPLAINT.IMAGE_NOT_FOUND"));
             complaint.setReportImage(reportImage);
         }
@@ -154,7 +165,7 @@ public class ComplaintService {
         String details = "Complaint created by: " + reporter.getId();
         eventPublisher.publishEvent(new AuditEvent(this, AuditAction.NEW_COMPLAINT, subjectEmail, details));
 
-        return toResponseDTO(storedComplaint);
+        return toResponseDTO(storedComplaint, true);
     }
 
     @Transactional
@@ -198,7 +209,7 @@ public class ComplaintService {
         eventPublisher.publishEvent(new AuditEvent(this, AuditAction.COMPLAINT_STATUS_UPDATED, subjectEmail, details));
 
         complaintNotificationService.notifyStatusChanged(savedComplaint);
-        return toResponseDTO(savedComplaint);
+        return toResponseDTO(savedComplaint, false);
     }
 
     @Transactional
@@ -225,7 +236,7 @@ public class ComplaintService {
         String details = "Complaint " + complaintId + " assigned to user " + assignee.getId();
         eventPublisher.publishEvent(new AuditEvent(this, AuditAction.COMPLAINT_ASSIGNED, subjectEmail, details));
 
-        return toResponseDTO(savedComplaint);
+        return toResponseDTO(savedComplaint, false);
     }
 
     private User resolveUserFromSubject(String subjectEmail) {
@@ -302,10 +313,6 @@ public class ComplaintService {
         return stops;
     }
 
-    private String generateTrackingToken() {
-        return UUID.randomUUID().toString().replace("-", "").toUpperCase();
-    }
-
     private Instant resolveResponseSla(Instant createdAt, ComplaintPriority priority) {
         // SLA can be tuned in one place without changing business flow code.
         return switch (priority) {
@@ -340,9 +347,12 @@ public class ComplaintService {
         }
     }
 
-    private ComplaintResponseDTO toResponseDTO(Complaint complaint) {
+    private ComplaintResponseDTO toResponseDTO(Complaint complaint, boolean includeTrackingToken) {
         String email = sensitiveDataService.decrypt(complaint.getContactEmailEncrypted());
         String phone = sensitiveDataService.decrypt(complaint.getContactPhoneEncrypted());
+        String trackingToken = includeTrackingToken
+                ? sensitiveDataService.decrypt(complaint.getTrackingTokenEncrypted())
+                : null;
 
         ComplaintUserSummaryDTO reporter = null;
         if (!complaint.isAnonymous() && complaint.getReporterUser() != null) {
@@ -373,7 +383,7 @@ public class ComplaintService {
                 complaint.isAnonymous(),
                 ContactMaskingUtils.maskEmail(email),
                 ContactMaskingUtils.maskPhone(phone),
-                complaint.getTrackingToken(),
+                trackingToken,
                 imageId,
                 complaint.getCreatedAt(),
                 complaint.getUpdatedAt(),

@@ -16,5 +16,5 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 
     Optional<Complaint> findByIdAndCompanyId(Long id, Long companyId);
 
-    Optional<Complaint> findByTrackingToken(String trackingToken);
+    Optional<Complaint> findByTrackingTokenHash(String trackingTokenHash);
 }

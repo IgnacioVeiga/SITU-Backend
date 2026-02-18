@@ -21,16 +21,17 @@ public class ComplaintNotificationService {
 
     public void notifyStatusChanged(Complaint complaint) {
         String email = sensitiveDataService.decrypt(complaint.getContactEmailEncrypted());
+        String trackingToken = sensitiveDataService.decrypt(complaint.getTrackingTokenEncrypted());
         if (email != null && !email.isBlank()) {
             try {
-                emailService.sendComplaintStatusChangedEmail(email, complaint.getTrackingToken(), complaint.getState());
+                emailService.sendComplaintStatusChangedEmail(email, trackingToken, complaint.getState());
             } catch (MessagingException ex) {
                 LOGGER.error("Could not deliver complaint status email for complaint {}", complaint.getId(), ex);
             }
         }
 
         // Placeholder for mobile push notifications integration.
-        enqueueMobileStatusNotification(complaint.getTrackingToken(), complaint.getState());
+        enqueueMobileStatusNotification(trackingToken, complaint.getState());
     }
 
     private void enqueueMobileStatusNotification(String trackingToken, ComplaintState state) {

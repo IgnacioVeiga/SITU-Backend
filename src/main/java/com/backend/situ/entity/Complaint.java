@@ -58,8 +58,11 @@ public class Complaint {
     @Column(name = "contact_phone_encrypted")
     private String contactPhoneEncrypted;
 
-    @Column(name = "tracking_token")
-    private String trackingToken;
+    @Column(name = "tracking_token_encrypted")
+    private String trackingTokenEncrypted;
+
+    @Column(name = "tracking_token_hash")
+    private String trackingTokenHash;
 
     @Column(name = "created_at")
     private Timestamp createdAt;
@@ -202,12 +205,20 @@ public class Complaint {
         this.contactPhoneEncrypted = contactPhoneEncrypted;
     }
 
-    public String getTrackingToken() {
-        return trackingToken;
+    public String getTrackingTokenEncrypted() {
+        return trackingTokenEncrypted;
     }
 
-    public void setTrackingToken(String trackingToken) {
-        this.trackingToken = trackingToken;
+    public void setTrackingTokenEncrypted(String trackingTokenEncrypted) {
+        this.trackingTokenEncrypted = trackingTokenEncrypted;
+    }
+
+    public String getTrackingTokenHash() {
+        return trackingTokenHash;
+    }
+
+    public void setTrackingTokenHash(String trackingTokenHash) {
+        this.trackingTokenHash = trackingTokenHash;
     }
 
     public Timestamp getCreatedAt() {

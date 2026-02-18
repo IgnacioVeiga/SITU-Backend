@@ -65,6 +65,9 @@ class ComplaintServiceTest {
     private SensitiveDataService sensitiveDataService;
 
     @Mock
+    private TrackingTokenService trackingTokenService;
+
+    @Mock
     private ComplaintNotificationService complaintNotificationService;
 
     private ComplaintService complaintService;
@@ -81,6 +84,7 @@ class ComplaintServiceTest {
                 stopRepository,
                 reportImageRepository,
                 sensitiveDataService,
+                trackingTokenService,
                 complaintNotificationService
         );
     }
@@ -93,10 +97,14 @@ class ComplaintServiceTest {
         UserCredentials credentials = new UserCredentials(reporter, subject, "hash");
 
         when(authRepository.findByEmail(subject)).thenReturn(Optional.of(credentials));
+        when(trackingTokenService.generateToken()).thenReturn("public-tracking-token");
+        when(trackingTokenService.hashToken("public-tracking-token")).thenReturn("hashed-tracking-token");
         when(sensitiveDataService.encrypt("john@example.com")).thenReturn("enc-email");
         when(sensitiveDataService.encrypt("1122334455")).thenReturn("enc-phone");
+        when(sensitiveDataService.encrypt("public-tracking-token")).thenReturn("enc-tracking-token");
         when(sensitiveDataService.decrypt("enc-email")).thenReturn("john@example.com");
         when(sensitiveDataService.decrypt("enc-phone")).thenReturn("1122334455");
+        when(sensitiveDataService.decrypt("enc-tracking-token")).thenReturn("public-tracking-token");
         when(complaintRepository.save(any(Complaint.class))).thenAnswer(invocation -> {
             Complaint saved = invocation.getArgument(0);
             saved.setId(1L);
@@ -125,7 +133,7 @@ class ComplaintServiceTest {
         assertNotNull(response.resolutionDueAt());
         assertEquals("j***@example.com", response.maskedContactEmail());
         assertEquals("***4455", response.maskedContactPhone());
-        assertNotNull(response.trackingToken());
+        assertEquals("public-tracking-token", response.trackingToken());
         verify(eventPublisher, times(1)).publishEvent(any());
     }
 

@@ -27,6 +27,10 @@ Allowed transitions are validated server-side.
 - Anonymous mode is supported.
 - Contact fields are encrypted at rest.
 - API responses expose masked contact values only.
+- Tracking tokens are not stored in plain text:
+  - token value is encrypted in DB,
+  - lookup uses HMAC-SHA256 hash.
+- Tracking token is only returned in user-facing flows (`create`, `mine`, and public tracking endpoint), not in staff-wide listings/details.
 
 ## Assignment
 - Complaint assignment is explicit via `/complaints/{id}/assign`.
