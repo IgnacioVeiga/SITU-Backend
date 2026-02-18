@@ -64,7 +64,7 @@ class AuthInterceptorTest {
 
     @Test
     void shouldRejectProtectedEndpointWhenCookieIsMissing() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/users/0/10/1");
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/users/0/10");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         boolean allowed = authInterceptor.preHandle(request, response, new Object());
@@ -76,7 +76,7 @@ class AuthInterceptorTest {
 
     @Test
     void shouldAllowAdminOnManagementEndpoint() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/users/0/10/1");
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/users/0/10");
         request.setCookies(new Cookie("authToken", "valid-token"));
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -94,7 +94,7 @@ class AuthInterceptorTest {
 
     @Test
     void shouldReturnForbiddenForPassengerOnManagementEndpoint() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/users/0/10/1");
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/users/0/10");
         request.setCookies(new Cookie("authToken", "valid-token"));
         MockHttpServletResponse response = new MockHttpServletResponse();
 
