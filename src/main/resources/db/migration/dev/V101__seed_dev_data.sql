@@ -69,6 +69,134 @@ VALUES (1, 1, 'Demora por corte de calle', 'Se reportan demoras por desvio tempo
        (2, 4, 'Paro parcial', 'Se mantiene servicio minimo en franja nocturna.', NOW(), NOW() - INTERVAL '2 hours',
         NOW() + INTERVAL '3 hours', TRUE, 'LOW', 'Zona Oeste');
 
+-- Complaint tracking tokens (dev only):
+-- - SITU-DEV-COMP-001-TRACKING-ALPHA
+-- - SITU-DEV-COMP-002-TRACKING-BRAVO
+-- - SITU-DEV-COMP-003-TRACKING-CHARLIE
+-- - SITU-DEV-COMP-004-TRACKING-DELTA
+INSERT INTO complaints (
+    id,
+    company_id,
+    reporter_user_id,
+    assignee_user_id,
+    report_image_id,
+    description,
+    reason,
+    state,
+    priority,
+    is_anonymous,
+    contact_email_encrypted,
+    contact_phone_encrypted,
+    tracking_token_encrypted,
+    tracking_token_hash,
+    created_at,
+    updated_at,
+    first_response_at,
+    closed_at,
+    response_due_at,
+    resolution_due_at
+)
+VALUES (
+           1,
+           1,
+           3,
+           2,
+           1,
+           'La unidad no se detuvo en la parada solicitada durante el horario pico.',
+           'Conduccion y frecuencia',
+           'PENDING_REVIEW',
+           'HIGH',
+           TRUE,
+           '7UeV4Fm2Cp3+V8ebZwRN5Fej2aUg9bL1Qwzs8x89fVbOyJJ05emC9ytaQ2lDyokd09vTlj3MqiTJ',
+           'YMLnuJgaD2itIMb+3PXmTabHD/2Vm5/UrKdIJb4MBYb1yd4Yo31Tchm+P5A=',
+           'Ys+Gt7b/JWt0B2Uphg4gv0tUpYTd+nap037KaTAsn599OEP/+D0q1Ag2foklZkfBcDloKGiw4zkhtJWr',
+           '24aff09b4c4b46d1a70b0c2138f562d1ea389a196635404c3e5f4e7100a15534',
+           NOW() - INTERVAL '5 days',
+           NOW() - INTERVAL '5 days',
+           NULL,
+           NULL,
+           NOW() - INTERVAL '4 days',
+           NOW() + INTERVAL '2 days'
+       ),
+       (
+           2,
+           1,
+           1,
+           2,
+           2,
+           'El chofer no respeto el recorrido habitual y no hubo aviso previo.',
+           'Recorrido alterado',
+           'IN_REVIEW',
+           'MEDIUM',
+           FALSE,
+           'w21Lglsewol/0w6YZyuM04JNVWBomet/WDjP3OXIU41/h3K7dpqv6Igl40yWtSCDSAGMup58I4u/',
+           'ZrcZcU5vrXp1JJTQuJnxvTO3OOuX4cGBdNKKlGyXOMtPIjCUQL/7C4d8IB8=',
+           'ujkgH0nuprj4csZftiTnvLs9Kw64md8kz/hMZOIlpAWaJ1X0XTE9xAs/nHpc6k2WT+UaOLRphy93xt4p',
+           '3ed5d70f78c57e10b0bf362350a0b80bedf25a39fcc4ecc214ea22e1d236b762',
+           NOW() - INTERVAL '3 days',
+           NOW() - INTERVAL '1 day',
+           NOW() - INTERVAL '2 days',
+           NULL,
+           NOW() - INTERVAL '1 day',
+           NOW() + INTERVAL '10 days'
+       ),
+       (
+           3,
+           1,
+           3,
+           1,
+           1,
+           'Se reporta mala atencion al solicitar informacion sobre combinaciones.',
+           'Atencion al pasajero',
+           'CLOSED',
+           'LOW',
+           FALSE,
+           'lAwpe4moYGrPLBKvnMWPGWUxrMynTa/XEjIH3FlPDVM5TX5CurqXnfbju7aQJVYm3FhAm+1FndiL',
+           'Ve1QKsmuk5MIfrEFJ0rdLUS4qwnm+1pGodngxK0XO2nGVXmyx5MNlE75LVA=',
+           'gxte1hZE9U1lycnQxd6Xn90qEDri6O5SyuLLQ/jT4xp2MMgXSrOeU7xhKEdg8zUaGK+RiHwOyYrNNbE0Y+s=',
+           '14ecc1120a6e5b4b71037d3643d123c63c81f29d1219923490e5cacd7fe3d304',
+           NOW() - INTERVAL '10 days',
+           NOW() - INTERVAL '7 days',
+           NOW() - INTERVAL '9 days',
+           NOW() - INTERVAL '7 days',
+           NOW() - INTERVAL '8 days',
+           NOW() + INTERVAL '5 days'
+       ),
+       (
+           4,
+           2,
+           4,
+           4,
+           3,
+           'Se solicita revision de frecuencia nocturna por esperas prolongadas.',
+           'Frecuencia nocturna',
+           'PENDING_REVIEW',
+           'MEDIUM',
+           TRUE,
+           'vHkTmPrE7ptlrgZHE4CkBvfnDuBXRdOsh3ukbFFJnzCj8ePCDIqtzAtO0SqFY8gFZY3dPlrBfGle',
+           'rFYhcMQVJEGx7zcAsnOofROg1/qGYKVNeF/rtBYzMIgjIkNCA9Soj8+CdEY=',
+           'TcLKY3V8Zbavx5uJkzbqZVL949VnT6l4CBUVn1ZJHhH13f0j5PrnpB0JmIPkxUJEhdrFcTc6HzViAkIR',
+           '0e3f5dc0b6235fe3b48311c1d12454c3ac7d50f15949f8b10a0f3f7b4aded141',
+           NOW() - INTERVAL '2 days',
+           NOW() - INTERVAL '2 days',
+           NULL,
+           NULL,
+           NOW() + INTERVAL '1 day',
+           NOW() + INTERVAL '13 days'
+       );
+
+INSERT INTO complaints_lines (complaint_id, line_id)
+VALUES (1, 1),
+       (2, 2),
+       (3, 1),
+       (4, 3);
+
+INSERT INTO complaints_routes (complaint_id, route_id)
+VALUES (1, 1),
+       (2, 2),
+       (3, 1),
+       (4, 3);
+
 SELECT setval('companies_id_seq', COALESCE((SELECT MAX(id) FROM companies), 1), TRUE);
 SELECT setval('profile_images_id_seq', COALESCE((SELECT MAX(id) FROM profile_images), 1), TRUE);
 SELECT setval('users_id_seq', COALESCE((SELECT MAX(id) FROM users), 1), TRUE);
@@ -78,3 +206,4 @@ SELECT setval('lines_id_seq', COALESCE((SELECT MAX(id) FROM lines), 1), TRUE);
 SELECT setval('routes_id_seq', COALESCE((SELECT MAX(id) FROM routes), 1), TRUE);
 SELECT setval('stops_id_seq', COALESCE((SELECT MAX(id) FROM stops), 1), TRUE);
 SELECT setval('alerts_id_seq', COALESCE((SELECT MAX(id) FROM alerts), 1), TRUE);
+SELECT setval('complaints_id_seq', COALESCE((SELECT MAX(id) FROM complaints), 1), TRUE);
