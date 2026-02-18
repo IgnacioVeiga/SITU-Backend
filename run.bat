@@ -41,6 +41,13 @@ if not exist "%ENV_FILE%" (
     exit /b 1
 )
 
+if defined JAVA_HOME (
+    if not exist "%JAVA_HOME%\bin\java.exe" (
+        echo Warning: JAVA_HOME is invalid ^("%JAVA_HOME%"^). Falling back to PATH java.
+        set "JAVA_HOME="
+    )
+)
+
 for /f "usebackq tokens=1* delims==" %%A in ("%ENV_FILE%") do (
     set KEY=%%A
     set VALUE=%%B
@@ -54,7 +61,7 @@ for /f "usebackq tokens=1* delims==" %%A in ("%ENV_FILE%") do (
 if "%SPRING_PROFILES_ACTIVE%"=="" set SPRING_PROFILES_ACTIVE=%ENVIRONMENT%
 
 echo Starting backend locally with profile '%SPRING_PROFILES_ACTIVE%' using '%ENV_FILE%'...
-call mvnw.cmd spring-boot:run
+call mvnw.cmd clean spring-boot:run
 exit /b %ERRORLEVEL%
 
 :wait_for_db

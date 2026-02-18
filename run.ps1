@@ -3,6 +3,46 @@ $Mode = if ($args.Count -gt 1) { $args[1] } else { "local" }
 $EnvFile = ".env.$EnvironmentName"
 $DbContainerName = "situ_postgres"
 
+function Ensure-JavaHome {
+    $javaInHome = $false
+    if ($env:JAVA_HOME) {
+        $javaInHome = (Test-Path (Join-Path $env:JAVA_HOME "bin/java")) -or (Test-Path (Join-Path $env:JAVA_HOME "bin/java.exe"))
+    }
+    if ($javaInHome) {
+        return
+    }
+
+    if ($env:JAVA_HOME) {
+        Write-Host "Warning: JAVA_HOME is invalid ('$($env:JAVA_HOME)'). Trying auto-detection..."
+    }
+
+    $candidates = @(
+        "/usr/lib/jvm/java-21-openjdk",
+        "/usr/lib/jvm/jdk-21",
+        "/usr/lib/jvm/temurin-21-jdk"
+    )
+
+    foreach ($candidate in $candidates) {
+        if (Test-Path (Join-Path $candidate "bin/java")) {
+            $env:JAVA_HOME = $candidate
+            return
+        }
+    }
+
+    $javaCommand = Get-Command java -ErrorAction SilentlyContinue
+    if ($javaCommand) {
+        $javaPath = $javaCommand.Source
+        $detectedHome = Split-Path -Parent (Split-Path -Parent $javaPath)
+        if ($detectedHome -and ((Test-Path (Join-Path $detectedHome "bin/java")) -or (Test-Path (Join-Path $detectedHome "bin/java.exe")))) {
+            $env:JAVA_HOME = $detectedHome
+            return
+        }
+    }
+
+    Write-Host "Could not find a valid JDK installation. Install Java 21 and retry."
+    exit 1
+}
+
 function Wait-ForDatabase {
     $MaxAttempts = 30
     $DelaySeconds = 2
@@ -64,5 +104,7 @@ if (-not $env:SPRING_PROFILES_ACTIVE) {
     $env:SPRING_PROFILES_ACTIVE = $EnvironmentName
 }
 
+Ensure-JavaHome
+
 Write-Host "Starting backend locally with profile '$($env:SPRING_PROFILES_ACTIVE)' using '$EnvFile'..."
-.\mvnw.cmd spring-boot:run
+.\mvnw.cmd clean spring-boot:run
