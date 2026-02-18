@@ -111,6 +111,13 @@ public class AuthService {
         // TODO: Nothing definite yet to do with the phone and the notes received from the form.
     }
 
+    public boolean existsEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        return this.authRepository.findByEmail(email.trim()).isPresent();
+    }
+
     public int changePassword(String authToken, ChangePasswordDTO form) {
         String email = jwtService.getSubjectFromToken(authToken);
         UserCredentials user = this.authRepository.findByEmail(email).orElse(null);

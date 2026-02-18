@@ -291,7 +291,7 @@ public class ComplaintService {
         String phone = sensitiveDataService.decrypt(complaint.getContactPhoneEncrypted());
 
         ComplaintUserSummaryDTO reporter = null;
-        if (complaint.getReporterUser() != null) {
+        if (!complaint.isAnonymous() && complaint.getReporterUser() != null) {
             reporter = new ComplaintUserSummaryDTO(
                     complaint.getReporterUser().getId(),
                     complaint.getReporterUser().getFirstName() + " " + complaint.getReporterUser().getLastName()

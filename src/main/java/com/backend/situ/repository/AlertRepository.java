@@ -22,4 +22,6 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
             Timestamp now,
             Pageable pageable
     );
+
+    Page<Alert> findAllByOrderByAlertDateDesc(Pageable pageable);
 }

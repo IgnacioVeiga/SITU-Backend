@@ -53,14 +53,18 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse response) {
         this.authService.destroyCookie(response);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ApiResponse.success(null, null));
     }
 
     @Transactional
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> signup(@RequestBody SignupDTO form) {
+        if (this.authService.existsEmail(form.email())) {
+            throw new BadRequestException("ERRORS.AUTH.EMAIL_EXISTS");
+        }
+
         if (this.companyService.existCompanyName(form.companyName())) {
             throw new BadRequestException("ERRORS.AUTH.COMPANY_EXISTS");
         }

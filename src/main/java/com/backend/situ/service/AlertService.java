@@ -39,8 +39,11 @@ public class AlertService {
         this.authRepository = authRepository;
     }
 
-    public Page<Alert> listAlerts(int pageIndex, int pageSize) {
+    public Page<Alert> listAlerts(int pageIndex, int pageSize, boolean activeOnly) {
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
+        if (!activeOnly) {
+            return this.alertRepository.findAllByOrderByAlertDateDesc(pageable);
+        }
         Timestamp now = Timestamp.from(Instant.now());
         return this.alertRepository.findActiveAt(now, pageable);
     }

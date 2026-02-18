@@ -21,9 +21,10 @@ public class AlertController {
     @GetMapping("/{pageIndex}/{pageSize}")
     public ResponseEntity<ApiResponse<Page<Alert>>> list(
             @PathVariable("pageIndex") int pageIndex,
-            @PathVariable("pageSize") int pageSize
+            @PathVariable("pageSize") int pageSize,
+            @RequestParam(name = "activeOnly", defaultValue = "true") boolean activeOnly
     ) {
-        return ResponseEntity.ok(ApiResponse.success(this.alertService.listAlerts(pageIndex, pageSize), null));
+        return ResponseEntity.ok(ApiResponse.success(this.alertService.listAlerts(pageIndex, pageSize, activeOnly), null));
     }
 
     @PostMapping
