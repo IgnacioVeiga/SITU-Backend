@@ -1,5 +1,9 @@
 -- Dev seed data.
--- Password for all demo users in this script: admin123456
+-- Demo credentials (plain password is shared on purpose only in dev):
+-- - johndoe@example.com / admin123456
+-- - employee@example.com / admin123456
+-- - passenger@example.com / admin123456
+-- - tenantadmin@example.com / admin123456
 -- BCrypt hash generated beforehand and intentionally reused in dev only.
 
 INSERT INTO companies (id, name, logo_filename)
@@ -18,10 +22,10 @@ VALUES (1, 1, 1, 12345678, 'John', 'Doe', 'ADMIN'),
        (4, 2, NULL, 42345678, 'Luis', 'Tenant', 'ADMIN');
 
 INSERT INTO user_credentials (user_id, email, password_hash)
-VALUES (1, 'johndoe@example.com', '$2a$10$LZgvDbioLsZGXCmq.AH8TubH37f.TruxzaXZtuJR/YX8AdocWr1F.'),
-       (2, 'employee@example.com', '$2a$10$LZgvDbioLsZGXCmq.AH8TubH37f.TruxzaXZtuJR/YX8AdocWr1F.'),
-       (3, 'passenger@example.com', '$2a$10$LZgvDbioLsZGXCmq.AH8TubH37f.TruxzaXZtuJR/YX8AdocWr1F.'),
-       (4, 'tenantadmin@example.com', '$2a$10$LZgvDbioLsZGXCmq.AH8TubH37f.TruxzaXZtuJR/YX8AdocWr1F.');
+VALUES (1, 'johndoe@example.com', '$2a$10$LZgvDbioLsZGXCmq.AH8TubH37f.TruxzaXZtuJR/YX8AdocWr1F.'), -- admin123456
+       (2, 'employee@example.com', '$2a$10$LZgvDbioLsZGXCmq.AH8TubH37f.TruxzaXZtuJR/YX8AdocWr1F.'), -- admin123456
+       (3, 'passenger@example.com', '$2a$10$LZgvDbioLsZGXCmq.AH8TubH37f.TruxzaXZtuJR/YX8AdocWr1F.'), -- admin123456
+       (4, 'tenantadmin@example.com', '$2a$10$LZgvDbioLsZGXCmq.AH8TubH37f.TruxzaXZtuJR/YX8AdocWr1F.'); -- admin123456
 
 INSERT INTO report_images (id, company_id, filename)
 VALUES (1, 1, '/images/report_demo_1.jpg'),
