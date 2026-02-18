@@ -14,13 +14,41 @@ It powers authentication, complaints, alerts, users, transit entities (lines/rou
 - Legacy prefix `/api/situ` is not used anymore.
 
 ## Quick start
-1. Copy `.env.example` to your local environment file (`.env.dev` or IDE env profile).
-2. Fill required variables (DB, JWT, CORS, mail, encryption key).
-3. Run:
+1. Copy `.env.example` to your local environment file (`.env.dev`, `.env.qa`, or `.env.prod`).
+2. Set `SPRING_PROFILES_ACTIVE` to `dev`, `qa`, or `prod`.
+3. Fill required variables (DB, JWT, CORS, mail, encryption key).
+4. Run:
 
 ```bash
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk bash mvnw spring-boot:run
 ```
+
+## Local database with Docker
+`docker-compose.yml` is database-only (PostgreSQL + PostGIS).
+
+Start DB with your dev env file:
+
+```bash
+docker compose --env-file .env.dev up -d postgres
+```
+
+Stop DB:
+
+```bash
+docker compose down
+```
+
+## Starter scripts
+You can start backend and/or DB with:
+
+- Linux/macOS: `./run.sh [dev|qa|prod] [local|docker]`
+- PowerShell: `./run.ps1 [dev|qa|prod] [local|docker]`
+- CMD: `run.bat [dev|qa|prod] [local|docker]`
+
+Examples:
+
+- `./run.sh dev local` -> start backend app with `.env.dev`.
+- `./run.sh dev docker` -> start only PostgreSQL container using `.env.dev`.
 
 ## Quality checks
 Run tests:
@@ -37,5 +65,18 @@ JAVA_HOME=/usr/lib/jvm/java-21-openjdk bash mvnw -DskipTests package
 
 ## Documentation
 - `docs/environment.md`: environment variables and security notes.
+- `docs/migrations.md`: Flyway common+env strategy.
 - `docs/business-rules.md`: complaint/alert business logic.
 - `docs/api-v1.md`: current endpoint reference.
+
+## Migration structure
+- `src/main/resources/db/migration/common`: shared migrations for every environment.
+- `src/main/resources/db/migration/dev`: dev-only data/bootstrap.
+- `src/main/resources/db/migration/qa`: qa-only bootstrap.
+- `src/main/resources/db/migration/prod`: prod-only bootstrap.
+
+## IntelliJ run configurations
+Tracked run configs are available in `.run/`:
+- `Backend - Dev` (uses `.env.dev`)
+- `Backend - QA` (uses `.env.qa`)
+- `Backend - Prod` (uses `.env.prod`)

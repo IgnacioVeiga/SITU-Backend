@@ -1,9 +1,14 @@
 # Backend environment variables
 
-## Runtime profile
+## Profile selection
 ```env
-APP_ENV=development
+SPRING_PROFILES_ACTIVE=dev
+APP_ENV=dev
 ```
+
+- Supported profiles: `dev`, `qa`, `prod`.
+- `APP_ENV` is optional and only mirrors profile information inside app-level properties.
+- If `SPRING_PROFILES_ACTIVE` is not set, backend defaults to `dev`.
 
 ## Database
 ```env
@@ -45,6 +50,33 @@ MAIL_PASSWORD=your-app-password
 
 Mail is used for signup credentials and complaint status notifications.
 
+## Logging and server timezone
+```env
+LOG_SECURITY_LEVEL=INFO
+APP_TIMEZONE=America/Argentina/Buenos_Aires
+```
+
+## Flyway locations by profile
+- `dev`: `classpath:db/migration/common,classpath:db/migration/dev`
+- `qa`: `classpath:db/migration/common,classpath:db/migration/qa`
+- `prod`: `classpath:db/migration/common,classpath:db/migration/prod`
+
 ## Notes
-- `application.properties` only contains non-sensitive defaults.
-- Keep real values in local or deployment environment files, not in Git.
+- `application.properties` contains non-sensitive defaults and shared configuration.
+- Use `application-dev.properties`, `application-qa.properties`, and `application-prod.properties` for profile-specific overrides.
+- Keep real values in local/deployment environment files, never in Git.
+
+## Docker local database
+
+Use `docker-compose.yml` to run only PostgreSQL/PostGIS:
+
+```bash
+docker compose --env-file .env.dev up -d postgres
+```
+
+Useful optional vars for compose:
+
+```env
+POSTGRES_DB=situ_dev
+POSTGRES_PORT=5432
+```
