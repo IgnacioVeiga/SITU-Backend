@@ -28,11 +28,17 @@ Human onboarding/operations docs are in `docs/`.
   - Do not return JPA entities directly from controllers.
 - Keep API response shape consistent (global error payload and `ApiResponse<T>` where already used).
 - Keep auth stateless and cookie/JWT based.
+- Keep route/stop geospatial contract stable:
+  - route writes accept GeoJSON `LineString` as string payload,
+  - stop writes accept GeoJSON `Point` as string payload,
+  - backend storage stays PostGIS SRID 4326.
 
 ## 4. Security and data rules
 
 - Keep authentication endpoints behavior aligned with frontend integration (`withCredentials`).
-- Preserve role boundaries for staff-only operations (`ADMIN`, `SUPERVISOR`, `EMPLOYEE`).
+- Keep API authorization in sync with `AuthInterceptor` rules.
+  - This repository currently applies role access control at interceptor level.
+- Preserve role boundaries defined in `AuthInterceptor` role sets (`MANAGEMENT_ROLES`, `COMPANY_STAFF_ROLES`, `STAFF_ROLES`).
 - Complaint contact data is encrypted at rest.
   - `security.data.encryption-key` must remain configurable from environment.
 - Anonymous complaint mode must keep contact masking for non-owner views.
@@ -70,3 +76,4 @@ For migration/auth changes, also verify startup and Flyway execution.
 - `docs/migrations.md`
 - `docs/business-rules.md`
 - `docs/api-v1.md`
+- `docs/maps-postgis-leaflet.md`

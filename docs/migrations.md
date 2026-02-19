@@ -22,7 +22,11 @@ Resolved locations by profile:
 
 ## Current baseline (v2.0.0)
 
-- `common/V1__init_schema.sql` is the single clean bootstrap for a fresh database.
+- `common/V1__init_schema.sql` is the single clean bootstrap for a fresh database:
+  - creates required extensions (`postgis`),
+  - creates all core tables,
+  - creates geometry columns (`routes.coordinates`, `stops.location`),
+  - creates spatial indexes (GiST) and tenant/lookup indexes.
 - `dev/V101__seed_dev_data.sql` provides development fixtures (users, lines, routes, stops, alerts).
 - `qa` and `prod` currently do not include sample data.
 

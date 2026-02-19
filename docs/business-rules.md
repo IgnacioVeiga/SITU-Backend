@@ -1,7 +1,7 @@
 # Business rules (current)
 
 ## Complaints
-- `Complaint` is the canonical entity for user claims/reports.
+- `Complaint` is the canonical entity for user complaints.
 - Main flow:
   - `PENDING_REVIEW`
   - `IN_REVIEW`
@@ -49,7 +49,7 @@ Allowed transitions are validated server-side.
 - A mobile notification integration hook is already prepared in the service layer.
 
 ## Alerts
-- Alerts are public notices and do not use a mandatory workflow state.
+- Alerts are platform-wide notices for authenticated users and do not use a mandatory workflow state.
 - Visibility is based on:
   - `isActive = true`
   - `startsAt <= now`
@@ -57,3 +57,9 @@ Allowed transitions are validated server-side.
 - Any authenticated user can create alerts.
 - Updates/deactivation are limited to company staff (`ADMIN`, `SUPERVISOR`, `EMPLOYEE`).
 - Alert list and update operations are tenant-scoped by the authenticated user company.
+
+## Transit map data
+- Route geometry is stored in PostGIS as `LineString` (SRID 4326).
+- Stop geometry is stored in PostGIS as `Point` (SRID 4326).
+- Route and stop write APIs use GeoJSON coordinate order `[longitude, latitude]`.
+- Read flows are consumed by the frontend map module, which renders selected lines, routes, and stops and supports single-route edit mode.

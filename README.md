@@ -75,12 +75,19 @@ JAVA_HOME=/usr/lib/jvm/java-21-openjdk bash mvnw -DskipTests package
 - `docs/migrations.md`: Flyway common+env strategy.
 - `docs/business-rules.md`: complaint/alert business logic.
 - `docs/api-v1.md`: current endpoint reference.
+- `docs/maps-postgis-leaflet.md`: geospatial contract (PostGIS storage + frontend Leaflet expectations).
 
 ## Migration structure
 - `src/main/resources/db/migration/common`: shared migrations for every environment.
 - `src/main/resources/db/migration/dev`: dev-only data/bootstrap.
 - `src/main/resources/db/migration/qa`: qa-only bootstrap.
 - `src/main/resources/db/migration/prod`: prod-only bootstrap.
+
+## Geospatial notes
+- Route geometry is stored in PostGIS as `GEOMETRY(LineString, 4326)`.
+- Stop geometry is stored in PostGIS as `GEOMETRY(Point, 4326)`.
+- Write APIs expect GeoJSON coordinates in `[longitude, latitude]` order.
+- Read APIs can expose route geometry in database-native text form (EWKB hex) depending on JDBC mapping.
 
 ## IntelliJ run configurations
 Tracked run configs are available in `.run/`:
