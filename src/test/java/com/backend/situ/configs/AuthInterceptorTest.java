@@ -3,7 +3,6 @@ package com.backend.situ.configs;
 import com.backend.situ.enums.UserRole;
 import com.backend.situ.service.AuthService;
 import com.backend.situ.service.JWTService;
-import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,8 +15,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -63,7 +60,7 @@ class AuthInterceptorTest {
     }
 
     @Test
-    void shouldRejectProtectedEndpointWhenCookieIsMissing() throws Exception {
+    void shouldRejectProtectedEndpointWhenAuthorizationHeaderIsMissing() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/users/0/10");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -77,29 +74,29 @@ class AuthInterceptorTest {
     @Test
     void shouldAllowAdminOnManagementEndpoint() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/users/0/10");
-        request.setCookies(new Cookie("authToken", "valid-token"));
+        request.addHeader("Authorization", "Bearer valid-token");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
+        when(jwtService.isTokenExpired("valid-token")).thenReturn(false);
         when(jwtService.getSubjectFromToken("valid-token")).thenReturn("admin@company.com");
-        when(authService.validateAndRenewToken(eq("valid-token"), any())).thenReturn(true);
         when(authService.getRoleFromToken("valid-token")).thenReturn(UserRole.ADMIN);
 
         boolean allowed = authInterceptor.preHandle(request, response, new Object());
 
         assertTrue(allowed);
+        verify(jwtService).isTokenExpired("valid-token");
         verify(jwtService).getSubjectFromToken("valid-token");
-        verify(authService).validateAndRenewToken(eq("valid-token"), any());
         verify(authService).getRoleFromToken("valid-token");
     }
 
     @Test
     void shouldReturnForbiddenForPassengerOnManagementEndpoint() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/users/0/10");
-        request.setCookies(new Cookie("authToken", "valid-token"));
+        request.addHeader("Authorization", "Bearer valid-token");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
+        when(jwtService.isTokenExpired("valid-token")).thenReturn(false);
         when(jwtService.getSubjectFromToken("valid-token")).thenReturn("passenger@company.com");
-        when(authService.validateAndRenewToken(eq("valid-token"), any())).thenReturn(true);
         when(authService.getRoleFromToken("valid-token")).thenReturn(UserRole.PASSENGER);
 
         boolean allowed = authInterceptor.preHandle(request, response, new Object());
@@ -134,11 +131,11 @@ class AuthInterceptorTest {
     @Test
     void shouldAllowPassengerToCreateAlert() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/alerts");
-        request.setCookies(new Cookie("authToken", "valid-token"));
+        request.addHeader("Authorization", "Bearer valid-token");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
+        when(jwtService.isTokenExpired("valid-token")).thenReturn(false);
         when(jwtService.getSubjectFromToken("valid-token")).thenReturn("passenger@company.com");
-        when(authService.validateAndRenewToken(eq("valid-token"), any())).thenReturn(true);
         when(authService.getRoleFromToken("valid-token")).thenReturn(UserRole.PASSENGER);
 
         boolean allowed = authInterceptor.preHandle(request, response, new Object());
@@ -149,11 +146,11 @@ class AuthInterceptorTest {
     @Test
     void shouldDenyPassengerWhenUpdatingAlert() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("PATCH", "/api/v1/alerts/1");
-        request.setCookies(new Cookie("authToken", "valid-token"));
+        request.addHeader("Authorization", "Bearer valid-token");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
+        when(jwtService.isTokenExpired("valid-token")).thenReturn(false);
         when(jwtService.getSubjectFromToken("valid-token")).thenReturn("passenger@company.com");
-        when(authService.validateAndRenewToken(eq("valid-token"), any())).thenReturn(true);
         when(authService.getRoleFromToken("valid-token")).thenReturn(UserRole.PASSENGER);
 
         boolean allowed = authInterceptor.preHandle(request, response, new Object());
@@ -166,11 +163,11 @@ class AuthInterceptorTest {
     @Test
     void shouldAllowPassengerToReadOwnComplaints() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/complaints/mine/0/10");
-        request.setCookies(new Cookie("authToken", "valid-token"));
+        request.addHeader("Authorization", "Bearer valid-token");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
+        when(jwtService.isTokenExpired("valid-token")).thenReturn(false);
         when(jwtService.getSubjectFromToken("valid-token")).thenReturn("passenger@company.com");
-        when(authService.validateAndRenewToken(eq("valid-token"), any())).thenReturn(true);
         when(authService.getRoleFromToken("valid-token")).thenReturn(UserRole.PASSENGER);
 
         boolean allowed = authInterceptor.preHandle(request, response, new Object());

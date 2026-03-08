@@ -33,4 +33,4 @@ Resolved locations by profile:
 ## Important reset note
 
 - Migration history was unified for a clean install flow.
-- Existing databases migrated with old `V0_*` scripts must be recreated before applying this baseline.
+- Existing databases migrated with legacy pre-2.0 scripts must be recreated before applying this baseline.

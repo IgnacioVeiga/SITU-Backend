@@ -1,6 +1,6 @@
 # Maps interoperability (PostGIS + Leaflet)
 
-This document defines the geospatial contract between `SITU-Backend` and `SITU-WebApp`.
+This document defines the geospatial contract between `SITU-Backend` and `SITU-Frontend`.
 
 ## 1. Storage model (backend)
 

@@ -6,6 +6,7 @@ import com.backend.situ.enums.UserRole;
 import com.backend.situ.exception.BadRequestException;
 import com.backend.situ.exception.UnauthorizedException;
 import com.backend.situ.model.ApiResponse;
+import com.backend.situ.model.AuthTokenResponse;
 import com.backend.situ.model.ChangePasswordDTO;
 import com.backend.situ.model.LoginDTO;
 import com.backend.situ.model.SessionDTO;
@@ -13,11 +14,11 @@ import com.backend.situ.model.SignupDTO;
 import com.backend.situ.service.AuthService;
 import com.backend.situ.service.CompanyService;
 import com.backend.situ.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,22 +40,31 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<SessionDTO>> login(
+    public ResponseEntity<ApiResponse<AuthTokenResponse>> login(
             @RequestBody LoginDTO form,
             HttpServletResponse response
     ) {
-        SessionDTO session = this.authService.doLogin(form, response);
+        AuthTokenResponse authResponse = this.authService.doLogin(form, response);
 
-        if (session == null) {
+        if (authResponse == null) {
             throw new UnauthorizedException("ERRORS.AUTH.INVALID_CREDENTIALS");
         }
 
-        return ResponseEntity.ok(ApiResponse.success(session, "Inicio de sesión exitoso."));
+        return ResponseEntity.ok(ApiResponse.success(authResponse, "Inicio de sesión exitoso."));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<AuthTokenResponse>> refresh(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        AuthTokenResponse authResponse = this.authService.refresh(request, response);
+        return ResponseEntity.ok(ApiResponse.success(authResponse, null));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse response) {
-        this.authService.destroyCookie(response);
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request, HttpServletResponse response) {
+        this.authService.logout(request, response);
         return ResponseEntity.ok(ApiResponse.success(null, null));
     }
 
@@ -89,9 +99,10 @@ public class AuthController {
     @PostMapping("/password")
     public ResponseEntity<ApiResponse<Void>> updatePassword(
             @RequestBody ChangePasswordDTO form,
-            @CookieValue("authToken") String authToken
+            HttpServletRequest request
     ) {
-        int statusCode = authService.changePassword(authToken, form);
+        String subject = resolveSubject(request);
+        int statusCode = authService.changePassword(subject, form);
 
         return switch (statusCode) {
             case 200 -> ResponseEntity.ok(ApiResponse.success(null, "Contraseña modificada."));
@@ -102,13 +113,22 @@ public class AuthController {
     }
 
     @GetMapping("/session")
-    public ResponseEntity<ApiResponse<SessionDTO>> getSession(@CookieValue("authToken") String authToken) {
-        SessionDTO session = this.authService.getSessionData(authToken);
+    public ResponseEntity<ApiResponse<SessionDTO>> getSession(HttpServletRequest request) {
+        String subject = resolveSubject(request);
+        SessionDTO session = this.authService.getSessionData(subject);
 
         if (session == null) {
             throw new UnauthorizedException("ERRORS.AUTH.INVALID_CREDENTIALS");
         }
 
         return ResponseEntity.ok(ApiResponse.success(session, null));
+    }
+
+    private String resolveSubject(HttpServletRequest request) {
+        Object subject = request.getAttribute("auth.subject");
+        if (!(subject instanceof String value) || value.isBlank()) {
+            throw new UnauthorizedException("ERRORS.AUTH.INVALID_CREDENTIALS");
+        }
+        return value;
     }
 }

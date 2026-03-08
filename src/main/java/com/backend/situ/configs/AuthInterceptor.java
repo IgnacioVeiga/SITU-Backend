@@ -1,31 +1,31 @@
 package com.backend.situ.configs;
 
 import com.backend.situ.enums.UserRole;
-import com.backend.situ.model.ApiResponse;
 import com.backend.situ.service.AuthService;
 import com.backend.situ.service.JWTService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.time.Instant;
 import java.util.EnumSet;
-import java.util.Optional;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
 
-    private static final String AUTH_COOKIE_NAME = "authToken";
     private static final String API_PREFIX = "/api/v1";
 
     private static final Set<UserRole> STAFF_ROLES = EnumSet.of(
@@ -72,21 +72,21 @@ public class AuthInterceptor implements HandlerInterceptor {
                 return true;
             }
 
-            String authToken = extractAuthToken(request);
-            if (authToken == null || authToken.isBlank()) {
+            String accessToken = extractAccessToken(request);
+            if (accessToken == null || accessToken.isBlank()) {
                 return writeError(response, HttpServletResponse.SC_UNAUTHORIZED, "ERRORS.AUTH.INVALID_CREDENTIALS");
             }
 
-            String subject = jwtService.getSubjectFromToken(authToken);
+            if (jwtService.isTokenExpired(accessToken)) {
+                return writeError(response, HttpServletResponse.SC_UNAUTHORIZED, "ERRORS.AUTH.INVALID_CREDENTIALS");
+            }
+
+            String subject = jwtService.getSubjectFromToken(accessToken);
             if (subject == null || subject.isBlank()) {
                 return writeError(response, HttpServletResponse.SC_UNAUTHORIZED, "ERRORS.AUTH.INVALID_CREDENTIALS");
             }
 
-            if (!authService.validateAndRenewToken(authToken, response)) {
-                return writeError(response, HttpServletResponse.SC_UNAUTHORIZED, "ERRORS.AUTH.INVALID_CREDENTIALS");
-            }
-
-            UserRole role = authService.getRoleFromToken(authToken);
+            UserRole role = authService.getRoleFromToken(accessToken);
             if (role == null) {
                 return writeError(response, HttpServletResponse.SC_UNAUTHORIZED, "ERRORS.AUTH.INVALID_CREDENTIALS");
             }
@@ -104,23 +104,21 @@ public class AuthInterceptor implements HandlerInterceptor {
     }
 
     private boolean isPublicEndpoint(String path, String method) {
-                return ("/auth/login".equals(path) && HttpMethod.POST.matches(method))
-                || ("/auth/signup".equals(path) && HttpMethod.POST.matches(method))
+        return ("/auth/login".equals(path) && HttpMethod.POST.matches(method))
+                || ("/auth/refresh".equals(path) && HttpMethod.POST.matches(method))
                 || ("/auth/logout".equals(path) && HttpMethod.POST.matches(method))
+                || ("/auth/signup".equals(path) && HttpMethod.POST.matches(method))
                 || (path.startsWith("/complaints/tracking/") && HttpMethod.GET.matches(method));
     }
 
-    private String extractAuthToken(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) {
+    private String extractAccessToken(HttpServletRequest request) {
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return null;
         }
 
-        Optional<Cookie> authCookieOpt = Arrays.stream(cookies)
-                .filter(cookie -> AUTH_COOKIE_NAME.equals(cookie.getName()))
-                .findFirst();
-
-        return authCookieOpt.map(Cookie::getValue).orElse(null);
+        String token = authHeader.substring(7).trim();
+        return token.isEmpty() ? null : token;
     }
 
     private boolean isRoleAllowed(String path, String method, UserRole role) {
@@ -181,7 +179,6 @@ public class AuthInterceptor implements HandlerInterceptor {
             return STAFF_ROLES.contains(role);
         }
 
-        // Deny by default to avoid exposing new endpoints accidentally.
         return false;
     }
 
@@ -202,7 +199,15 @@ public class AuthInterceptor implements HandlerInterceptor {
         response.setStatus(status);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(objectMapper.writeValueAsString(ApiResponse.failure(messageKey)));
+
+        HttpStatus httpStatus = HttpStatus.valueOf(status);
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("timestamp", Instant.now().toString());
+        payload.put("status", status);
+        payload.put("error", httpStatus.getReasonPhrase());
+        payload.put("message", messageKey);
+
+        response.getWriter().write(objectMapper.writeValueAsString(payload));
         return false;
     }
 }

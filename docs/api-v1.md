@@ -2,12 +2,23 @@
 
 Base path: `/api/v1`
 
-All JSON endpoints use the common envelope:
+Successful JSON endpoints can use the common envelope:
 
 ```json
 {
   "message": "optional-message-or-key",
   "data": {}
+}
+```
+
+Error responses use a unified structure:
+
+```json
+{
+  "timestamp": "2026-03-08T13:48:13.3040484Z",
+  "status": 401,
+  "error": "Unauthorized",
+  "message": "ERRORS.AUTH.INVALID_CREDENTIALS"
 }
 ```
 

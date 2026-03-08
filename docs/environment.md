@@ -115,9 +115,9 @@ Then run backend using `Backend - Dev` (`.run/Backend - Dev.run.xml`), which loa
 
 Use one command to start DB + backend in dev:
 
-- Linux/macOS: `./start-dev.sh`
-- PowerShell: `./start-dev.ps1`
-- CMD: `start-dev.bat`
+- Linux/macOS: `./scripts/start-dev.sh`
+- PowerShell: `./scripts/start-dev.ps1`
+- CMD: `scripts/start-dev.bat`
 
 These wrappers call `run.* dev auto`, which:
 
