@@ -71,8 +71,14 @@ JAVA_HOME=/usr/lib/jvm/java-21-openjdk bash mvnw -DskipTests package
 ```
 
 ## Documentation
-- `docs/environment.md`: environment variables and security notes.
-- `docs/migrations.md`: Flyway common+env strategy.
+- `docs/DEVELOPMENT_SETUP.md`: setup and startup flow.
+- `docs/ENVIRONMENTS.md`: profile and env convention quick reference.
+- `docs/AUTH_FLOW.md`: auth/session lifecycle summary.
+- `docs/MIGRATIONS.md`: standardized Flyway layout and rules.
+- `docs/TROUBLESHOOTING.md`: common failures and checks.
+- `docs/PROJECT_MAP.md`: source navigation map.
+- `docs/environment.md`: detailed environment variables and security notes.
+- `docs/MIGRATIONS.md`: detailed Flyway notes.
 - `docs/business-rules.md`: complaint/alert business logic.
 - `docs/api-v1.md`: current endpoint reference.
 - `docs/maps-postgis-leaflet.md`: geospatial contract (PostGIS storage + frontend Leaflet expectations).

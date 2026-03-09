@@ -36,9 +36,8 @@ Human onboarding/operations docs are in `docs/`.
 ## 4. Security and data rules
 
 - Keep authentication endpoints behavior aligned with frontend integration (`withCredentials`).
-- Keep API authorization in sync with `AuthInterceptor` rules.
-  - This repository currently applies role access control at interceptor level.
-- Preserve role boundaries defined in `AuthInterceptor` role sets (`MANAGEMENT_ROLES`, `COMPANY_STAFF_ROLES`, `STAFF_ROLES`).
+- Keep API authorization in sync with `SecurityConfig` route/method rules.
+- Preserve role boundaries for management/company-staff/staff scopes in centralized security configuration.
 - Complaint contact data is encrypted at rest.
   - `security.data.encryption-key` must remain configurable from environment.
 - Anonymous complaint mode must keep contact masking for non-owner views.
@@ -72,8 +71,14 @@ For migration/auth changes, also verify startup and Flyway execution.
 ## 8. Read these files first
 
 - `README.md`
+- `docs/DEVELOPMENT_SETUP.md`
+- `docs/ENVIRONMENTS.md`
+- `docs/AUTH_FLOW.md`
+- `docs/MIGRATIONS.md`
+- `docs/TROUBLESHOOTING.md`
+- `docs/PROJECT_MAP.md`
 - `docs/environment.md`
-- `docs/migrations.md`
+- `docs/MIGRATIONS.md`
 - `docs/business-rules.md`
 - `docs/api-v1.md`
 - `docs/maps-postgis-leaflet.md`
